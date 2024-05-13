@@ -21,7 +21,7 @@ void debug_alloc_and_free_counts();
 #define global_free(ptr) debug_free(ptr)
 #endif
 #ifndef str_type
-#define str_type char
+#define str_type wchar_t
 #endif
 #define nil 0
 typedef unsigned char Byte;
@@ -403,7 +403,7 @@ String new_string_wide(const wchar_t* str){
 	return out;
 }
 void _strconcat(String * a, const char* b, size_t b_size){
-	#if str_type == char
+	if(sizeof(str_type) == 1){
         int l = len(*a)-1;
 		resize((*a), len((*a))+strlen(b));
 		int l2 = strlen(b);
@@ -411,22 +411,28 @@ void _strconcat(String * a, const char* b, size_t b_size){
 			(*a)[l+i] = (str_type)(b[i]);
 		}
 		(*a)[l+l2] = '\0';
-	#else
-	if(b_size <4){
-        int l = len(*a)-1;
-		resize((*a), len((*a))+strlen(b));
-		for(int i=0; i<strlen(b); i++){
-			(*a)[l+i] = (str_type)(b[i]);
+	}
+	else{
+		if(b_size <4){
+			int l = len(*a)-1;
+			resize((*a), len((*a))+strlen(b));
+			int l2 = strlen(b);
+			for(int i=0; i<strlen(b); i++){
+				(*a)[l+i] = (str_type)(b[i]);
+			}
+			(*a)[l+l2] = '\0';
+		}
+		else {
+			int l = len(*a)-1;
+			resize((*a), len((*a))+wcslen((const wchar_t *)b));
+			const wchar_t * v = (const wchar_t *)b;
+			int l2 = wcslen(v);
+			for(int i=0; i<l2; i++){
+				(*a)[l+i] = (str_type)(v[i]);
+			}
+			(*a)[l+l2] = '\0';
 		}
 	}
-	else {
-		resize((*a), len((*a))+wcslen((const wchar_t *)b));
-		const wchar_t * v = (const wchar_t *)b;
-		for(int i=0; i<wcslen(v); i++){
-			(*a)[len(a)-1] = (str_type)(v[i]);
-		}
-	}
-	#endif
 }
 String string_format(const char * fmt, ...){
 	String s =new_string("");
