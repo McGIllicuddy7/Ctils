@@ -188,7 +188,7 @@ long get_time_microseconds();
 void begin_profile();
 long end_profile();
 void end_profile_print(const char * message);
-
+int execute(const char ** strings);
 /*
 Implementation
 */
@@ -294,7 +294,28 @@ long end_profile(){
 void end_profile_print(const char * message){
 	printf("%s took %f seconds\n",message, ((double)end_profile())/1000000);
 }
-
+int execute(const char ** strings){
+    if(strings == nil){
+        return 1;
+    }
+    if(*strings == nil){
+        return 1;
+    }
+    bool * b = global_alloc(1,sizeof(bool));
+    *b = 1;
+    int s = fork();
+    if(!s){
+        int a = execvp(strings[0], (char*const*)strings);
+        if(a){
+            *b = 0;
+        }
+    }else{
+        sleep(1);
+        debug_free(b);
+        return 0;
+    }
+    return 1;
+}
 typedef struct{
     size_t length;
     size_t capacity;
