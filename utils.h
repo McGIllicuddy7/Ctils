@@ -1,5 +1,5 @@
 #pragma once
-//use #define COG_IMPLEMENTATION
+//use #define CTILS_IMPLEMENTATION
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -190,7 +190,7 @@ void end_profile_print(const char * message);
 Implementation
 */
 
-//#ifdef COG_IMPLEMENTATION 
+#ifdef CTILS_IMPLEMENTATION 
 static int alloc_count = 0;
 static int free_count =0;
 void * debug_alloc(size_t count, size_t size){
@@ -516,4 +516,4 @@ String RandomString(int minlen, int maxlen){
 	out[length+1] = 0;
 	return out;
 }
-//#endif
+#endif
