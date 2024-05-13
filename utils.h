@@ -21,7 +21,7 @@ void debug_alloc_and_free_counts();
 #define global_free(ptr) debug_free(ptr)
 #endif
 #ifndef str_type
-#define str_type wchar_t
+#define str_type char
 #endif
 #define nil 0
 typedef unsigned char Byte;
@@ -31,9 +31,6 @@ Memory stuff
 */
 
 void mem_shift(void * start, size_t size, size_t count, size_t distance);
-void slice_cpy(void * target, void * source, size_t element_size, size_t count);
-
-
 /*
 Slice stuff
 */
@@ -187,6 +184,7 @@ long get_time_microseconds();
 void begin_profile();
 long end_profile();
 void end_profile_print(const char * message);
+
 /*
 Implementation
 */
