@@ -312,7 +312,25 @@ int execute(const char ** strings){
     }
     return 1;
 }
-
+int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
+    if(strings == nil){
+        return 1;
+    }
+    if(*strings == nil){
+        return 1;
+    }
+    int s = fork();
+    if(s){
+        dup2(f_out,fileno(stdout));
+        dup2(f_in, fileno(stdin));
+        dup2(f_er, fileno(stderr));
+        int a = execvp(strings[0], (char*const*)strings);
+		exit(0);
+    }else{
+        return 0;
+    }
+    return 1;
+}
 /*array stuff*/
 typedef struct{
     size_t length;
