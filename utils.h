@@ -177,6 +177,10 @@ static void T##U##HashTable_destroy(T##U##HashTable * table){\
 	global_free(table->Table);\
 	global_free(table);\
 }
+
+
+
+
 /*
 Utils
 */
