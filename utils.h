@@ -21,7 +21,7 @@ void debug_alloc_and_free_counts();
 #define global_free(ptr) debug_free(ptr)
 #endif
 #ifndef str_type
-#define str_type wchar_t
+#define str_type char
 #endif
 #define nil 0
 typedef unsigned char Byte;
@@ -81,7 +81,8 @@ String RandomString(int minlen, int maxlen);
 
 #define str_append(a,b)\
 	resize(a, len(a)+1);\
-	a[len(a)-1] = b
+	a[len(a)-2] = b;\
+	a[len(a)-1] = '\0'\
 
 /*
 HashFunctions
@@ -402,6 +403,15 @@ String new_string_wide(const wchar_t* str){
 	return out;
 }
 void _strconcat(String * a, const char* b, size_t b_size){
+	#if str_type == char
+        int l = len(*a)-1;
+		resize((*a), len((*a))+strlen(b));
+		int l2 = strlen(b);
+		for(int i=0; i<strlen(b); i++){
+			(*a)[l+i] = (str_type)(b[i]);
+		}
+		(*a)[l+l2] = '\0';
+	#else
 	if(b_size <4){
         int l = len(*a)-1;
 		resize((*a), len((*a))+strlen(b));
@@ -416,6 +426,7 @@ void _strconcat(String * a, const char* b, size_t b_size){
 			(*a)[len(a)-1] = (str_type)(v[i]);
 		}
 	}
+	#endif
 }
 String string_format(const char * fmt, ...){
 	String s =new_string("");
@@ -424,10 +435,7 @@ String string_format(const char * fmt, ...){
 	int l = strlen(fmt);
 	for(int i = 0; i<l; i++){
 		if(fmt[i] != '%'){
-            {
-				str_append(s, fmt[i]);
-			}
-			append(s, '\0');
+			str_append(s, fmt[i]);
 		}
 		else{
 			if(fmt[i+1] == 'c'){
