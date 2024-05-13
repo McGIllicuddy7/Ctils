@@ -189,11 +189,13 @@ void begin_profile();
 long end_profile();
 void end_profile_print(const char * message);
 int execute(const char ** strings);
+int execute_fd(int f_out, int f_in, int f_er, const char ** strings);
 /*
 Implementation
 */
 
 #ifdef CTILS_IMPLEMENTATION 
+#include <unistd.h>
 static int alloc_count = 0;
 static int free_count =0;
 void * debug_alloc(size_t count, size_t size){
@@ -301,21 +303,17 @@ int execute(const char ** strings){
     if(*strings == nil){
         return 1;
     }
-    bool * b = global_alloc(1,sizeof(bool));
-    *b = 1;
     int s = fork();
-    if(!s){
+    if(s){
         int a = execvp(strings[0], (char*const*)strings);
-        if(a){
-            *b = 0;
-        }
+		exit(0);
     }else{
-        sleep(1);
-        debug_free(b);
         return 0;
     }
     return 1;
 }
+
+/*array stuff*/
 typedef struct{
     size_t length;
     size_t capacity;
