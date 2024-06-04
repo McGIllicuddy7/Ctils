@@ -351,28 +351,28 @@ String generate_matrix_header(const char * type, const char * type_alias, int di
 }
 String generate_m_add_function(const char * type, const char * type_alias, int dimension){
     String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
-    String out = string_format("%s %sAdd(%s a %s b){\
-    %s out = {};\
-    for(int y = 0; y<%d; y++){\
-        for(int x = 0;x<%d, x++){\
-                out.data[y][x] = a.data[y][x]+b.data[y][x];\
-        }\
-    }\
-    return out;\
-}");
+    String out = string_format("%s %sAdd(%s,a %s b){\
+    %s out = {};\n\
+    for(int y = 0; y<%d; y++){\n\
+        for(int x = 0;x<%d, x++){\n\
+                out.data[y][x] = a.data[y][x]+b.data[y][x];\n\
+        }\n\
+    }\n\
+    return out;\n\
+}", name, name, name, name, name, dimension, dimension);
     destroy(name);
     return out;
 }
 String generate_m_sub_function(const char * type, const char * type_alias, int dimension){
     String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
-    String out = string_format("%s %sSub(%s a %s b){\
-    %s out = {};\
-    for(int y = 0; y<%d; y++){\
-        for(int x = 0;x<%d, x++){\
-                out.data[y][x] = a.data[y][x]-b.data[y][x];\
-        }\
-    }\
-    return out;\
+    String out = string_format("%s %sSub(%s a, %s b){\
+    %s out = {};\n\
+    for(int y = 0; y<%d; y++){\n\
+        for(int x = 0;x<%d, x++){\n\
+                out.data[y][x] = a.data[y][x]-b.data[y][x];\n\
+        }\n\
+    }\n\
+    return out;\n\
 }", name, name, name, name, name, dimension, dimension);
     destroy(name);
     return out;
@@ -380,14 +380,14 @@ String generate_m_sub_function(const char * type, const char * type_alias, int d
 String generate_m_mlt_function(const char * type, const char * type_alias, int dimension){
     String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
     String vec_name = string_format("vector%d%s",dimension, type_alias);
-    String out = string_format("%s %sMlt(%s a %s b){\
-    %s out = {};\
-    for(int y = 0; y<%d; y++){\
-        for(int x = 0;x<%d, x++){\
-                out.data[y][x] = %sDot(%sCol(a,y), %sRow(b,x));\
-        }\
-    }\
-    return out;\
+    String out = string_format("%s %sMlt(%s a, %s b){\n\
+    %s out = {};\n\
+    for(int y = 0; y<%d; y++){\n\
+        for(int x = 0;x<%d, x++){\n\
+                out.data[y][x] = %sDot(%sCol(a,y), %sRow(b,x));\n\
+        }\n\
+    }\n\
+    return out;\n\
 }", name, name, name, name, name, dimension, dimension, vec_name, name, name);
     destroy(name);
     destroy(vec_name);
@@ -427,11 +427,11 @@ int main(int argc, const char ** argv){
         str_append(to_write, '\n');
         destroy(tmp);
     }
-   // for(int i =2; i<6; i++){
-   //     String tmp = generate_matrix_functions("double", "d",i);
-    //    str_concat(to_write, tmp);
-    //    destroy(tmp); 
-   // }
+   for(int i =2; i<6; i++){
+        String tmp = generate_matrix_functions("double", "d",i);
+        str_concat(to_write, tmp);
+        destroy(tmp); 
+    }
     write_string_to_file(to_write, "utils_math.h");
     destroy(to_write);
 }

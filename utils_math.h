@@ -216,3 +216,92 @@ double vector5dLen(vector5d a){
 vector5d vector5dNormalize(vector5d a){return vector5dScale(1/vector5dLen(a),a);}
 double vector5dAngle(vector5d a, vector5d b){a = vector5dNormalize(a); b = vector5dNormalize(b);return acos(vector5dDot(a,b));}
 
+matrix2x2d matrix2x2dAdd(matrix2x2d,a matrix2x2d b){    matrix2x2d out = {};
+    for(int y = 0; y<2; y++){
+        for(int x = 0;x<2, x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}matrix2x2d matrix2x2dSub(matrix2x2d a, matrix2x2d b){    matrix2x2d out = {};
+    for(int y = 0; y<2; y++){
+        for(int x = 0;x<2, x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}matrix2x2d matrix2x2dMlt(matrix2x2d a, matrix2x2d b){
+    matrix2x2d out = {};
+    for(int y = 0; y<2; y++){
+        for(int x = 0;x<2, x++){
+                out.data[y][x] = vector2dDot(matrix2x2dCol(a,y), matrix2x2dRow(b,x));
+        }
+    }
+    return out;
+}matrix3x3d matrix3x3dAdd(matrix3x3d,a matrix3x3d b){    matrix3x3d out = {};
+    for(int y = 0; y<3; y++){
+        for(int x = 0;x<3, x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}matrix3x3d matrix3x3dSub(matrix3x3d a, matrix3x3d b){    matrix3x3d out = {};
+    for(int y = 0; y<3; y++){
+        for(int x = 0;x<3, x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}matrix3x3d matrix3x3dMlt(matrix3x3d a, matrix3x3d b){
+    matrix3x3d out = {};
+    for(int y = 0; y<3; y++){
+        for(int x = 0;x<3, x++){
+                out.data[y][x] = vector3dDot(matrix3x3dCol(a,y), matrix3x3dRow(b,x));
+        }
+    }
+    return out;
+}matrix4x4d matrix4x4dAdd(matrix4x4d,a matrix4x4d b){    matrix4x4d out = {};
+    for(int y = 0; y<4; y++){
+        for(int x = 0;x<4, x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}matrix4x4d matrix4x4dSub(matrix4x4d a, matrix4x4d b){    matrix4x4d out = {};
+    for(int y = 0; y<4; y++){
+        for(int x = 0;x<4, x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}matrix4x4d matrix4x4dMlt(matrix4x4d a, matrix4x4d b){
+    matrix4x4d out = {};
+    for(int y = 0; y<4; y++){
+        for(int x = 0;x<4, x++){
+                out.data[y][x] = vector4dDot(matrix4x4dCol(a,y), matrix4x4dRow(b,x));
+        }
+    }
+    return out;
+}matrix5x5d matrix5x5dAdd(matrix5x5d,a matrix5x5d b){    matrix5x5d out = {};
+    for(int y = 0; y<5; y++){
+        for(int x = 0;x<5, x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}matrix5x5d matrix5x5dSub(matrix5x5d a, matrix5x5d b){    matrix5x5d out = {};
+    for(int y = 0; y<5; y++){
+        for(int x = 0;x<5, x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}matrix5x5d matrix5x5dMlt(matrix5x5d a, matrix5x5d b){
+    matrix5x5d out = {};
+    for(int y = 0; y<5; y++){
+        for(int x = 0;x<5, x++){
+                out.data[y][x] = vector5dDot(matrix5x5dCol(a,y), matrix5x5dRow(b,x));
+        }
+    }
+    return out;
+}

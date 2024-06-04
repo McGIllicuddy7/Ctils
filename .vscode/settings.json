@@ -18,6 +18,8 @@
         "unordered_map": "c",
         "unordered_set": "c",
         "vector": "c",
-        "format": "c"
+        "format": "c",
+        "__locale": "c",
+        "ios": "c"
     }
 }
