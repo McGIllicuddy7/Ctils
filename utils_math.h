@@ -69,8 +69,8 @@ matrix2x2d matrix2x2dAdd(matrix2x2d a, matrix2x2d b);
 matrix2x2d matrix2x2dSub(matrix2x2d a, matrix2x2d b);
 matrix2x2d matrix2x2dMlt(matrix2x2d a, matrix2x2d b);
 matrix2x2d matrix2x2dScale(double s, matrix2x2d a);
-vector2d matrix2x2dGetRow(int row);
-vector2d matrix2x2dGetCol(int col);
+vector2d matrix2x2dRow(matrix2x2d m,int row);
+vector2d matrix2x2dCol(matrix2x2d m, int col);
 matrix2x2d matrix2x2dInverse(matrix2x2d a);
 matrix2x2d matrix2x2dDeterminant(matrix2x2d a);
 matrix2x2d matrix2x2dIdentity();
@@ -82,8 +82,8 @@ matrix3x3d matrix3x3dAdd(matrix3x3d a, matrix3x3d b);
 matrix3x3d matrix3x3dSub(matrix3x3d a, matrix3x3d b);
 matrix3x3d matrix3x3dMlt(matrix3x3d a, matrix3x3d b);
 matrix3x3d matrix3x3dScale(double s, matrix3x3d a);
-vector3d matrix3x3dGetRow(int row);
-vector3d matrix3x3dGetCol(int col);
+vector3d matrix3x3dRow(matrix3x3d m,int row);
+vector3d matrix3x3dCol(matrix3x3d m, int col);
 matrix3x3d matrix3x3dInverse(matrix3x3d a);
 matrix3x3d matrix3x3dDeterminant(matrix3x3d a);
 matrix3x3d matrix3x3dIdentity();
@@ -95,8 +95,8 @@ matrix4x4d matrix4x4dAdd(matrix4x4d a, matrix4x4d b);
 matrix4x4d matrix4x4dSub(matrix4x4d a, matrix4x4d b);
 matrix4x4d matrix4x4dMlt(matrix4x4d a, matrix4x4d b);
 matrix4x4d matrix4x4dScale(double s, matrix4x4d a);
-vector4d matrix4x4dGetRow(int row);
-vector4d matrix4x4dGetCol(int col);
+vector4d matrix4x4dRow(matrix4x4d m,int row);
+vector4d matrix4x4dCol(matrix4x4d m, int col);
 matrix4x4d matrix4x4dInverse(matrix4x4d a);
 matrix4x4d matrix4x4dDeterminant(matrix4x4d a);
 matrix4x4d matrix4x4dIdentity();
@@ -108,8 +108,8 @@ matrix5x5d matrix5x5dAdd(matrix5x5d a, matrix5x5d b);
 matrix5x5d matrix5x5dSub(matrix5x5d a, matrix5x5d b);
 matrix5x5d matrix5x5dMlt(matrix5x5d a, matrix5x5d b);
 matrix5x5d matrix5x5dScale(double s, matrix5x5d a);
-vector5d matrix5x5dGetRow(int row);
-vector5d matrix5x5dGetCol(int col);
+vector5d matrix5x5dRow(matrix5x5d m,int row);
+vector5d matrix5x5dCol(matrix5x5d m, int col);
 matrix5x5d matrix5x5dInverse(matrix5x5d a);
 matrix5x5d matrix5x5dDeterminant(matrix5x5d a);
 matrix5x5d matrix5x5dIdentity();
@@ -216,90 +216,119 @@ double vector5dLen(vector5d a){
 vector5d vector5dNormalize(vector5d a){return vector5dScale(1/vector5dLen(a),a);}
 double vector5dAngle(vector5d a, vector5d b){a = vector5dNormalize(a); b = vector5dNormalize(b);return acos(vector5dDot(a,b));}
 
-matrix2x2d matrix2x2dAdd(matrix2x2d,a matrix2x2d b){    matrix2x2d out = {};
+vector2d matrix2x2dCol(matrix2x2d v, int col){
+            return (vector2d){.x = v.data[col][0], .y = v.data[col][1]};
+}
+matrix2x2d matrix2x2dAdd(matrix2x2d a, matrix2x2d b){    matrix2x2d out = {};
     for(int y = 0; y<2; y++){
-        for(int x = 0;x<2, x++){
+        for(int x = 0;x<2; x++){
                 out.data[y][x] = a.data[y][x]+b.data[y][x];
         }
     }
     return out;
-}matrix2x2d matrix2x2dSub(matrix2x2d a, matrix2x2d b){    matrix2x2d out = {};
+}
+matrix2x2d matrix2x2dSub(matrix2x2d a, matrix2x2d b){    matrix2x2d out = {};
     for(int y = 0; y<2; y++){
-        for(int x = 0;x<2, x++){
+        for(int x = 0;x<2; x++){
                 out.data[y][x] = a.data[y][x]-b.data[y][x];
         }
     }
     return out;
-}matrix2x2d matrix2x2dMlt(matrix2x2d a, matrix2x2d b){
+}
+matrix2x2d matrix2x2dMlt(matrix2x2d a, matrix2x2d b){
     matrix2x2d out = {};
     for(int y = 0; y<2; y++){
-        for(int x = 0;x<2, x++){
+        for(int x = 0;x<2; x++){
                 out.data[y][x] = vector2dDot(matrix2x2dCol(a,y), matrix2x2dRow(b,x));
         }
     }
     return out;
-}matrix3x3d matrix3x3dAdd(matrix3x3d,a matrix3x3d b){    matrix3x3d out = {};
+}
+vector3d matrix3x3dCol(matrix3x3d v, int col){
+            return (vector3d){.x = v.data[col][0], .y = v.data[col][1], .z = v.data[col][2]};
+}
+matrix3x3d matrix3x3dAdd(matrix3x3d a, matrix3x3d b){    matrix3x3d out = {};
     for(int y = 0; y<3; y++){
-        for(int x = 0;x<3, x++){
+        for(int x = 0;x<3; x++){
                 out.data[y][x] = a.data[y][x]+b.data[y][x];
         }
     }
     return out;
-}matrix3x3d matrix3x3dSub(matrix3x3d a, matrix3x3d b){    matrix3x3d out = {};
+}
+matrix3x3d matrix3x3dSub(matrix3x3d a, matrix3x3d b){    matrix3x3d out = {};
     for(int y = 0; y<3; y++){
-        for(int x = 0;x<3, x++){
+        for(int x = 0;x<3; x++){
                 out.data[y][x] = a.data[y][x]-b.data[y][x];
         }
     }
     return out;
-}matrix3x3d matrix3x3dMlt(matrix3x3d a, matrix3x3d b){
+}
+matrix3x3d matrix3x3dMlt(matrix3x3d a, matrix3x3d b){
     matrix3x3d out = {};
     for(int y = 0; y<3; y++){
-        for(int x = 0;x<3, x++){
+        for(int x = 0;x<3; x++){
                 out.data[y][x] = vector3dDot(matrix3x3dCol(a,y), matrix3x3dRow(b,x));
         }
     }
     return out;
-}matrix4x4d matrix4x4dAdd(matrix4x4d,a matrix4x4d b){    matrix4x4d out = {};
+}
+vector4d matrix4x4dCol(matrix4x4d v, int col){
+            return (vector4d){.w = v.data[col][0],.x = v.data[col][1], .y = v.data[col][2], .z = v.data[col][3]};
+}
+matrix4x4d matrix4x4dAdd(matrix4x4d a, matrix4x4d b){    matrix4x4d out = {};
     for(int y = 0; y<4; y++){
-        for(int x = 0;x<4, x++){
+        for(int x = 0;x<4; x++){
                 out.data[y][x] = a.data[y][x]+b.data[y][x];
         }
     }
     return out;
-}matrix4x4d matrix4x4dSub(matrix4x4d a, matrix4x4d b){    matrix4x4d out = {};
+}
+matrix4x4d matrix4x4dSub(matrix4x4d a, matrix4x4d b){    matrix4x4d out = {};
     for(int y = 0; y<4; y++){
-        for(int x = 0;x<4, x++){
+        for(int x = 0;x<4; x++){
                 out.data[y][x] = a.data[y][x]-b.data[y][x];
         }
     }
     return out;
-}matrix4x4d matrix4x4dMlt(matrix4x4d a, matrix4x4d b){
+}
+matrix4x4d matrix4x4dMlt(matrix4x4d a, matrix4x4d b){
     matrix4x4d out = {};
     for(int y = 0; y<4; y++){
-        for(int x = 0;x<4, x++){
+        for(int x = 0;x<4; x++){
                 out.data[y][x] = vector4dDot(matrix4x4dCol(a,y), matrix4x4dRow(b,x));
         }
     }
     return out;
-}matrix5x5d matrix5x5dAdd(matrix5x5d,a matrix5x5d b){    matrix5x5d out = {};
+}
+vector5d matrix5x5dCol(matrix5x5d v, int col){
+   vector5d out = {};
+  out.x0 = v.data[col][0];
+  out.x1 = v.data[col][1];
+  out.x2 = v.data[col][2];
+  out.x3 = v.data[col][3];
+  out.x4 = v.data[col][4];
+   return out;
+}
+matrix5x5d matrix5x5dAdd(matrix5x5d a, matrix5x5d b){    matrix5x5d out = {};
     for(int y = 0; y<5; y++){
-        for(int x = 0;x<5, x++){
+        for(int x = 0;x<5; x++){
                 out.data[y][x] = a.data[y][x]+b.data[y][x];
         }
     }
     return out;
-}matrix5x5d matrix5x5dSub(matrix5x5d a, matrix5x5d b){    matrix5x5d out = {};
+}
+matrix5x5d matrix5x5dSub(matrix5x5d a, matrix5x5d b){    matrix5x5d out = {};
     for(int y = 0; y<5; y++){
-        for(int x = 0;x<5, x++){
+        for(int x = 0;x<5; x++){
                 out.data[y][x] = a.data[y][x]-b.data[y][x];
         }
     }
     return out;
-}matrix5x5d matrix5x5dMlt(matrix5x5d a, matrix5x5d b){
+}
+matrix5x5d matrix5x5dMlt(matrix5x5d a, matrix5x5d b){
     matrix5x5d out = {};
     for(int y = 0; y<5; y++){
-        for(int x = 0;x<5, x++){
+        for(int x = 0;x<5; x++){
                 out.data[y][x] = vector5dDot(matrix5x5dCol(a,y), matrix5x5dRow(b,x));
         }
     }
