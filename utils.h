@@ -190,6 +190,8 @@ long end_profile();
 void end_profile_print(const char * message);
 int execute(const char ** strings);
 int execute_fd(int f_out, int f_in, int f_er, const char ** strings);
+bool write_string_to_file(const char * s, const char * file_name);
+String read_file_to_string(const char * file_name);
 /*
 Implementation
 */
@@ -343,9 +345,11 @@ size_t to_pow_2(size_t sz){
     }
     return i;
 }
+
 ArrayHeader_t* GetHeader(void* array){
     return (ArrayHeader_t*)(array-sizeof(ArrayHeader_t));
 }
+
 void * new_array(size_t object_size, size_t capacity){
     size_t space = to_pow_2(capacity);
     void * tmp = global_alloc(1,sizeof(ArrayHeader_t)+object_size*space);
@@ -567,6 +571,31 @@ String RandomString(int minlen, int maxlen){
 		out[i] = c;
 	}
 	out[length+1] = 0;
+	return out;
+}
+/*
+IO FUNCTIONALITY
+*/
+bool write_string_to_file(const char * s, const char * file_name){
+	FILE * f = fopen(file_name, "w");
+	if(f == 0){
+		return 0;
+	}
+	size_t size = strlen(s);
+	size_t w_size = fwrite(s, 1,size, f);
+	fclose(f);
+	return size == w_size;
+}
+String read_file_to_string(const char *file_name){
+	FILE *f= fopen(file_name, "rb");
+	fseek(f, 0, SEEK_END);
+	size_t fsize = ftell(f);
+	fseek(f, 0, SEEK_SET); 
+	String out = new_string("");
+	resize(out, fsize+1);
+	fread(out, 1, fsize, f);
+	fclose(f);
+	out[fsize]= 0;
 	return out;
 }
 #endif
