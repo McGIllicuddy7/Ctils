@@ -324,6 +324,7 @@ String generate_matrix_header(const char * type, const char * type_alias, int di
 "%s %sAdd(%s a, %s b);\n\
 %s %sSub(%s a, %s b);\n\
 %s %sMlt(%s a, %s b);\n\
+%s %sMltVec(%s a, %s b);\n\
 %s %sScale(%s s, %s a);\n\
 %s %sRow(%s m,int row);\n\
 %s %sCol(%s m, int col);\n\
@@ -335,6 +336,7 @@ String generate_matrix_header(const char * type, const char * type_alias, int di
         name, name, name, name,
         name, name, name, name,
         name, name, name, name,
+        vec_name, name, name,vec_name,
         name, name, type, name,
         vec_name, name,name,
         vec_name, name,name,
@@ -355,20 +357,49 @@ String generate_m_col_function(const char * type, const char * type_alias, int d
     String out;
     if(dimension == 2){
         out = string_format("%s %sCol(%s v, int col){\n\
-            return (%s){.x = v.data[col][0], .y = v.data[col][1]};\n}\n", 
+            return (%s){.x = v.data[0][col], .y = v.data[1][col]};\n}\n", 
         vec_name, name, name, vec_name);
     } else if(dimension == 3){
         out = string_format("%s %sCol(%s v, int col){\n\
-            return (%s){.x = v.data[col][0], .y = v.data[col][1], .z = v.data[col][2]};\n}\n", 
+            return (%s){.x = v.data[0][col], .y = v.data[1][col], .z = v.data[2][col]};\n}\n", 
         vec_name, name, name, vec_name);
     } else if(dimension == 4){
         out = string_format("%s %sCol(%s v, int col){\n\
-            return (%s){.w = v.data[col][0],.x = v.data[col][1], .y = v.data[col][2], .z = v.data[col][3]};\n}\n", 
+            return (%s){.w = v.data[0][col],.x = v.data[1][col], .y = v.data[2][col], .z = v.data[3][col]};\n}\n", 
         vec_name, name, name, vec_name);
     } else{
         out = string_format("%s %sCol(%s v, int col){\n   %s out = {};\n", vec_name, name, name, vec_name);
         for(int i =0; i<dimension; i++){
-            String tmp = string_format("  out.x%d = v.data[col][%d];\n", i,i);
+            String tmp = string_format("  out.x%d = v.data[%d][col];\n", i,i);
+            str_concat(out, tmp);
+            destroy(tmp);
+        }
+        str_concat(out, "   return out;\n}\n");
+    }
+    destroy(name);
+    destroy(vec_name);
+    return out;
+}
+String generate_m_row_function(const char * type, const char * type_alias, int dimension){
+    String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
+    String vec_name = string_format("vector%d%s",dimension, type_alias);
+    String out;
+    if(dimension == 2){
+        out = string_format("%s %sRow(%s v, int row){\n\
+            return (%s){.x = v.data[0][row], .y = v.data[1][row]};\n}\n", 
+        vec_name, name, name, vec_name);
+    } else if(dimension == 3){
+        out = string_format("%s %sRow(%s v, int row){\n\
+            return (%s){.x = v.data[row][0], .y = v.data[row][1], .z = v.data[row][2]};\n}\n", 
+        vec_name, name, name, vec_name);
+    } else if(dimension == 4){
+        out = string_format("%s %sRow(%s v, int row){\n\
+            return (%s){.w = v.data[row][0],.x = v.data[row][1], .y = v.data[row][2], .z = v.data[row][3]};\n}\n", 
+        vec_name, name, name, vec_name);
+    } else{
+        out = string_format("%s %sRow(%s v, int row){\n   %s out = {};\n", vec_name, name, name, vec_name);
+        for(int i =0; i<dimension; i++){
+            String tmp = string_format("  out.x%d = v.data[row][%d];\n", i,i);
             str_concat(out, tmp);
             destroy(tmp);
         }
@@ -406,18 +437,45 @@ String generate_m_sub_function(const char * type, const char * type_alias, int d
     destroy(name);
     return out;
 }
+String generate_m_mlt_vec_function(const char * type, const char * type_alias, int dimension){
+    String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
+    String vec_name = string_format("vector%d%s",dimension, type_alias);
+    String out;
+    if(dimension == 2){
+        out = string_format("%s %sMltVec(%s a, %s b){\n  %s out = {%sDot(%sRow(a, 0), b), %sDot(%sRow(a, 1), b)};\n  return out;\n}\n", vec_name, name, name, vec_name, vec_name, vec_name, name, vec_name,name);
+    } else if(dimension == 3){
+        out = string_format("%s %sMltVec(%s a, %s b){\n  %s out = {%sDot(%sRow(a, 0), b), %sDot(%sRow(a, 1), b),%sDot(%sRow(a, 2), b)};  return out;\n}\n", vec_name, name, name, vec_name, vec_name, vec_name, name, vec_name,name, vec_name, name);
+    } else if(dimension == 4){
+        out = string_format("%s %sMltVec(%s a, %s b){\n  %s out = {%sDot(%sRow(a, 0), b), %sDot(%sRow(a, 1), b),%sDot(%sRow(a, 2), b), %sDot(%sRow(a,3), b)};return out;\n}\n", vec_name, name, name, vec_name, vec_name, vec_name, name, vec_name,name, vec_name, name,vec_name, name);
+    } else{
+    out = string_format("%s %sMltVec(%s a, %s b){\n  %s out = {};\n", vec_name, name, name, vec_name, vec_name);
+    for(int i =0; i<dimension; i++){
+        String tmp = string_format("  out.x%d = %sDot(%sRow(a, %d), b);", i, vec_name, name, i);
+        str_concat(out, tmp);
+        destroy(tmp);
+    }
+        str_concat(out, " \n  return out;\n}\n");
+    }
+
+    destroy(name);
+    destroy(vec_name);
+    return out; 
+}
 String generate_m_mlt_function(const char * type, const char * type_alias, int dimension){
     String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
     String vec_name = string_format("vector%d%s",dimension, type_alias);
     String out = string_format("%s %sMlt(%s a, %s b){\n\
     %s out = {};\n\
-    for(int y = 0; y<%d; y++){\n\
-        for(int x = 0;x<%d; x++){\n\
-                out.data[y][x] = %sDot(%sCol(a,y), %sRow(b,x));\n\
-        }\n\
-    }\n\
+    for (int i = 0; i < %d; i++) {\
+        for (int j = 0; j < %d; j++) {\
+            out.data[i][j] = 0;\
+            for (int k = 0; k < %d; k++) {\
+                out.data[i][j] += a.data[i][k] * b.data[k][j];\
+            }\
+        }\
+    }\
     return out;\n\
-}\n", name, name, name, name, name, dimension, dimension, vec_name, name, name);
+}\n", name, name, name, name, name, dimension, dimension, dimension);
     destroy(name);
     destroy(vec_name);
     return out;
@@ -425,16 +483,22 @@ String generate_m_mlt_function(const char * type, const char * type_alias, int d
 String generate_matrix_functions(const char * type, const char * type_alias, int dimension){
     String out = new_string("");
     String col = generate_m_col_function(type, type_alias, dimension);
+    String row = generate_m_row_function(type, type_alias, dimension);
     String add = generate_m_add_function(type, type_alias, dimension);
     String sub = generate_m_sub_function(type, type_alias, dimension);
+    String mlt_v =generate_m_mlt_vec_function(type, type_alias, dimension);  
     String mlt =generate_m_mlt_function(type, type_alias, dimension); 
     str_concat(out, col);
+    str_concat(out, row);
     str_concat(out, add);
     str_concat(out, sub);
+    str_concat(out, mlt_v);
     str_concat(out, mlt);
     destroy(col);
+    destroy(row);
     destroy(add);
     destroy(sub);
+    destroy(mlt_v);
     destroy(mlt);
     return out;
 }
