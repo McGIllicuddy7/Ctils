@@ -2,5 +2,5 @@ main.c
 makefile
 a.out
 a.out.dSYM/
-generate
 generator
+generator.dSYM/
