@@ -1,0 +1,2 @@
+gcc generator.c -std=c2x 
+./generate
