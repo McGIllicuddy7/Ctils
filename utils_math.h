@@ -63,7 +63,7 @@ vector5d vector5dNormalize(vector5d a);
 double vector5dAngle(vector5d a, vector5d b);
 
 typedef struct {
-  double values[2][2];
+  double data[2][2];
 }matrix2x2d;
 matrix2x2d matrix2x2dAdd(matrix2x2d a, matrix2x2d b);
 matrix2x2d matrix2x2dSub(matrix2x2d a, matrix2x2d b);
@@ -72,9 +72,11 @@ matrix2x2d matrix2x2dScale(double s, matrix2x2d a);
 vector2d matrix2x2dGetRow(int row);
 vector2d matrix2x2dGetCol(int col);
 matrix2x2d matrix2x2dInverse(matrix2x2d a);
+matrix2x2d matrix2x2dDeterminant(matrix2x2d a);
+matrix2x2d matrix2x2dIdentity();
 
 typedef struct {
-  double values[3][3];
+  double data[3][3];
 }matrix3x3d;
 matrix3x3d matrix3x3dAdd(matrix3x3d a, matrix3x3d b);
 matrix3x3d matrix3x3dSub(matrix3x3d a, matrix3x3d b);
@@ -83,9 +85,11 @@ matrix3x3d matrix3x3dScale(double s, matrix3x3d a);
 vector3d matrix3x3dGetRow(int row);
 vector3d matrix3x3dGetCol(int col);
 matrix3x3d matrix3x3dInverse(matrix3x3d a);
+matrix3x3d matrix3x3dDeterminant(matrix3x3d a);
+matrix3x3d matrix3x3dIdentity();
 
 typedef struct {
-  double values[4][4];
+  double data[4][4];
 }matrix4x4d;
 matrix4x4d matrix4x4dAdd(matrix4x4d a, matrix4x4d b);
 matrix4x4d matrix4x4dSub(matrix4x4d a, matrix4x4d b);
@@ -94,9 +98,11 @@ matrix4x4d matrix4x4dScale(double s, matrix4x4d a);
 vector4d matrix4x4dGetRow(int row);
 vector4d matrix4x4dGetCol(int col);
 matrix4x4d matrix4x4dInverse(matrix4x4d a);
+matrix4x4d matrix4x4dDeterminant(matrix4x4d a);
+matrix4x4d matrix4x4dIdentity();
 
 typedef struct {
-  double values[5][5];
+  double data[5][5];
 }matrix5x5d;
 matrix5x5d matrix5x5dAdd(matrix5x5d a, matrix5x5d b);
 matrix5x5d matrix5x5dSub(matrix5x5d a, matrix5x5d b);
@@ -105,6 +111,8 @@ matrix5x5d matrix5x5dScale(double s, matrix5x5d a);
 vector5d matrix5x5dGetRow(int row);
 vector5d matrix5x5dGetCol(int col);
 matrix5x5d matrix5x5dInverse(matrix5x5d a);
+matrix5x5d matrix5x5dDeterminant(matrix5x5d a);
+matrix5x5d matrix5x5dIdentity();
 
 vector2d vector2dAdd(vector2d a, vector2d b){
   return (vector2d){a.x +b.x, a.y+b.y};
