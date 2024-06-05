@@ -1,2 +1,2 @@
-gcc generator.c -std=c2x -o generator
+gcc generator.c -std=c2x -o generator -g3
 ./generator

@@ -2,7 +2,7 @@
 #include "utils.h"
 #include <stdio.h>
 String generate_pre_header_code(){
-    return new_string("#pragma once\n#include \"utils.h\"\n#include <math.h>\n#include <complex.h>\n//use #define UTILS_MATH_IMPLEMENTATION to compile\n\n");
+    return new_string("#pragma once\n#include \"utils.h\"\n#include <math.h>\n#include <complex.h>\n#include <stdio.h>\n//use #define UTILS_MATH_IMPLEMENTATION to compile\n\n");
 }
 String generate_vector_header(const char * type, const char * type_alias,int dimension){
     String out = new_string("");
@@ -31,6 +31,7 @@ String generate_vector_header(const char * type, const char * type_alias,int dim
 %s %sLen(%s a);\n\
 %s %sNormalize(%s a);\n\
 %s %sAngle(%s a, %s b);\n\
+void %sprint(%s v);\n\
 \n\
 ",
                         name, name, name, name,
@@ -39,7 +40,8 @@ String generate_vector_header(const char * type, const char * type_alias,int dim
                         name, name, type, name,
                         type,name,name,
                         name, name, name,
-                        type, name, name, name
+                        type, name, name, name,
+                        name, name
                         );
     str_concat(out, strct);
     str_concat(out, func_names);
@@ -50,7 +52,7 @@ String generate_vector_header(const char * type, const char * type_alias,int dim
     return out;
 }
 String generate_code_header(){
-    return string_format("");
+    return string_format("#ifdef UTILS_MATH_IMPLEMENTATION\n");
 }
 String generate_add_code(const char * type, const char * type_alias, int dimension){
     if(dimension == 2){
@@ -287,7 +289,43 @@ String generate_angle_code(const char * type, const char * type_alias, const cha
     dimension, type_alias
     );
 } 
-String generate_vector_code(const char * type, const char * type_alias,const char * sqrt_func, const char * inverse_cos_func, int dimension){
+String generate_print_code(const char * type, const char * type_alias, const char * print_code, int dimension){
+    String name = string_format("vector%d%s",dimension, type_alias);
+    String out;
+    if(dimension == 2){
+        out = string_format("void %sprint(%s v){\n  printf(\"%s, %s\", v.x, v.y);\n}", name, name,print_code, print_code);
+    } else if(dimension == 3){
+        out = string_format("void %sprint(%s v){\n  printf(\"%s, %s, %s\", v.x, v.y, v.z);\n}", name, name,print_code, print_code, print_code);
+    } else if(dimension == 4){
+        out = string_format("void %sprint(%s v){\n  printf(\"%s, %s, %s, %s\", v.w,v.x, v.y, v.z);\n}", name, name,print_code, print_code, print_code, print_code);
+    }else{
+        out = string_format("void %sprint(%s v){\n  printf(\"", name, name);
+        for(int i =0; i<dimension; i++){
+            String tmp;
+            if(i<dimension-1){
+                tmp =string_format("%s, ", print_code);
+            }
+            else{
+                tmp = string_format("%s\",", print_code);
+            }
+            str_concat(out, tmp);
+            destroy(tmp);
+        }
+        for(int i =0;i<dimension; i++){
+            String tmp;
+            if(i<dimension-1){
+                tmp =string_format("v.x%d, ", i);
+            } else{
+                tmp =string_format("v.x%d);\n}\n ", i);
+            }
+            str_concat(out,tmp); 
+            destroy(tmp);
+        }
+    }
+    destroy(name);
+    return out;
+}
+String generate_vector_code(const char * type, const char * type_alias,const char * sqrt_func, const char * inverse_cos_func,const char * print_code, int dimension){
     String out = new_string("");
     String add = generate_add_code(type, type_alias, dimension);
     String sub = generate_sub_code(type, type_alias, dimension);
@@ -296,6 +334,7 @@ String generate_vector_code(const char * type, const char * type_alias,const cha
     String length = generate_len_code(type, type_alias, sqrt_func, dimension);
     String normalize = generate_normalize_code(type, type_alias, dimension);
     String angle = generate_angle_code(type, type_alias, inverse_cos_func, dimension);
+    String print = generate_print_code(type, type_alias, print_code, dimension);
     str_concat(out, add);
     str_concat(out, sub);
     str_concat(out, scale);
@@ -303,6 +342,7 @@ String generate_vector_code(const char * type, const char * type_alias,const cha
     str_concat(out, length); 
     str_concat(out, normalize);
     str_concat(out, angle);
+    str_concat(out, print);
     destroy(add);
     destroy(sub);
     destroy(scale);
@@ -310,10 +350,11 @@ String generate_vector_code(const char * type, const char * type_alias,const cha
     destroy(length);
     destroy(normalize);
     destroy(angle);
+    destroy(print);
     return out;
 }
 String generate_code_footer(){
-    return 0;
+    return string_format("#endif");
 }
 String generate_matrix_header(const char * type, const char * type_alias, int dimension){ 
     String out = new_string("");
@@ -331,6 +372,7 @@ String generate_matrix_header(const char * type, const char * type_alias, int di
 %s %sInverse(%s a);\n\
 %s %sDeterminant(%s a);\n\
 %s %sIdentity();\n\
+%s %sTranpose(%s a);\n\
 \n\
 ",
         name, name, name, name,
@@ -342,7 +384,8 @@ String generate_matrix_header(const char * type, const char * type_alias, int di
         vec_name, name,name,
         name, name, name,
         name, name,name,
-        name,name,name
+        name,name,name,
+        name, name, name
     ); 
     str_concat(out, strct);
     str_concat(out, func_names);
@@ -423,6 +466,34 @@ String generate_m_add_function(const char * type, const char * type_alias, int d
     destroy(name);
     return out;
 }
+String generate_m_scale_function(const char * type, const char * type_alias, int dimension){
+    String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
+    String out = string_format("%s %sScale(%s s, %s a){\
+    %s out = {};\n\
+    for(int y = 0; y<%d; y++){\n\
+        for(int x = 0;x<%d; x++){\n\
+                out.data[y][x] = a.data[y][x]*s;\n\
+        }\n\
+    }\n\
+    return out;\n\
+}\n", name, name, type, name, name, dimension, dimension);
+    destroy(name);
+    return out;
+}
+String generate_m_transpose_function(const char * type, const char * type_alias, int dimension){
+    String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
+    String out = string_format("%s %sTranspose(%s a){\
+    %s out = {};\n\
+    for(int y = 0; y<%d; y++){\n\
+        for(int x = 0;x<%d; x++){\n\
+                out.data[y][x] = a.data[x][y];\n\
+        }\n\
+    }\n\
+    return out;\n\
+}\n", name, name,  name, name, dimension, dimension);
+    destroy(name);
+    return out;
+}
 String generate_m_sub_function(const char * type, const char * type_alias, int dimension){
     String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
     String out = string_format("%s %sSub(%s a, %s b){\
@@ -464,20 +535,52 @@ String generate_m_mlt_vec_function(const char * type, const char * type_alias, i
 String generate_m_mlt_function(const char * type, const char * type_alias, int dimension){
     String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
     String vec_name = string_format("vector%d%s",dimension, type_alias);
-    String out = string_format("%s %sMlt(%s a, %s b){\n\
+    String out;
+    if(dimension>0){
+    out = string_format("%s %sMlt(%s a, %s b){\n\
     %s out = {};\n\
-    for (int i = 0; i < %d; i++) {\
-        for (int j = 0; j < %d; j++) {\
-            out.data[i][j] = 0;\
-            for (int k = 0; k < %d; k++) {\
-                out.data[i][j] += a.data[i][k] * b.data[k][j];\
-            }\
-        }\
-    }\
+    for (int i = 0; i < %d; i++) {\n\
+        for (int j = 0; j < %d; j++) {\n\
+            out.data[i][j] = 0;\n\
+            for (int k = 0; k < %d; k++) {\n\
+                out.data[i][j] += a.data[i][k] * b.data[k][j];\n\
+            }\n\
+        }\n\
+    }\n\
     return out;\n\
 }\n", name, name, name, name, name, dimension, dimension, dimension);
+    } else{
+    out = string_format("%s %sMlt(%s a, %s b){\n\
+    %s out = {};\n",name, name, name, name, name);
+    for(int i =0; i<dimension; i++){
+        for(int j =0; j<dimension; j++){
+            String tmp0 = string_format("");
+            for(int k =0; k<dimension; k++){
+                String tmp1 = string_format("     out.data[%d][%d] += a.data[%d][%d]*b.data[%d][%d];\n", i,j,i, k, k, j); 
+                str_concat(tmp0, tmp1);
+                destroy(tmp1);
+            }
+            str_concat(out, tmp0);
+            destroy(tmp0);
+        }
+    }
+    str_concat(out, "\n  return out;\n}\n");
+    }
+
     destroy(name);
     destroy(vec_name);
+    return out;
+}
+String generate_identity_function(const char * type, const char * type_alias, int dimension){
+    String name = string_format("matrix%dx%d%s", dimension, dimension,type_alias);
+    String out = string_format("%s %sIdentity(){\n  %s out = {};\n", name, name,name);
+    for(int i =0; i<dimension;i++){
+        String tmp = string_format("  out.data[%d][%d] = 1;\n",i,i);
+        str_concat(out, tmp);
+        destroy(tmp);
+    }
+    str_concat(out, "  return out;\n}\n")
+    destroy(name);
     return out;
 }
 String generate_matrix_functions(const char * type, const char * type_alias, int dimension){
@@ -487,47 +590,93 @@ String generate_matrix_functions(const char * type, const char * type_alias, int
     String add = generate_m_add_function(type, type_alias, dimension);
     String sub = generate_m_sub_function(type, type_alias, dimension);
     String mlt_v =generate_m_mlt_vec_function(type, type_alias, dimension);  
-    String mlt =generate_m_mlt_function(type, type_alias, dimension); 
+    String mlt =generate_m_mlt_function(type, type_alias, dimension);
+    String ident = generate_identity_function(type, type_alias, dimension); 
+    String scale = generate_m_scale_function(type, type_alias, dimension);
+    String transpose = generate_m_transpose_function(type, type_alias, dimension);
     str_concat(out, col);
     str_concat(out, row);
     str_concat(out, add);
     str_concat(out, sub);
     str_concat(out, mlt_v);
     str_concat(out, mlt);
+    str_concat(out,ident);
+    str_concat(out, scale);
+    str_concat(out, transpose);
     destroy(col);
     destroy(row);
     destroy(add);
     destroy(sub);
     destroy(mlt_v);
     destroy(mlt);
+    destroy(ident);
+    destroy(scale);
+    destroy(transpose);
     return out;
 }
-int main(int argc, const char ** argv){
+String generate_type_header(const char * type_name, const char * type_alias, const char * sqrt_func, const char * acos_func, const char * print_code, const int max_dimension){
     String to_write = new_string("");
-    String header = generate_pre_header_code();
-    str_concat(to_write, header);
-    destroy(header);
-    for(int i =2; i<6; i++){
-        String tmp = generate_vector_header("double", "d", i);
+    for(int i =2; i<max_dimension; i++){
+        String tmp = generate_vector_header(type_name, type_alias, i);
         str_concat(to_write, tmp);
         destroy(tmp);
     }
-    for(int i =2; i<6; i++){
-        String tmp = generate_matrix_header("double", "d",i);
+    for(int i =2; i<max_dimension; i++){
+        String tmp = generate_matrix_header(type_name, type_alias,i);
         str_concat(to_write, tmp);
         destroy(tmp); 
     }
-    for(int i =2; i<6; i++){
-        String tmp = generate_vector_code("double", "d","sqrt", "acos",i);
+    return to_write;
+}
+String generate_type_code(const char * type_name, const char * type_alias, const char * sqrt_func, const char * acos_func, const char * print_code, const int max_dimension){
+    String to_write = new_string("");
+    for(int i =2; i<max_dimension; i++){
+        String tmp = generate_vector_code(type_name, type_alias,sqrt_func, acos_func,print_code,i);
         str_concat(to_write, tmp);
         str_append(to_write, '\n');
         destroy(tmp);
     }
-   for(int i =2; i<6; i++){
-        String tmp = generate_matrix_functions("double", "d",i);
+   for(int i =2; i<max_dimension; i++){
+        String tmp = generate_matrix_functions(type_name, type_alias,i);
         str_concat(to_write, tmp);
         destroy(tmp); 
     }
+    return to_write;
+}
+int main(int argc, const char ** argv){
+    const int max_dimension = 8;
+    String to_write = new_string("");
+    String header = generate_pre_header_code();
+    str_concat(to_write, header);
+    destroy(header);
+    String db_head = generate_type_header("double", "d", "sqrt", "acos", "%lf", max_dimension);
+    str_concat(to_write, db_head);
+    destroy(db_head);
+    String f_head = generate_type_header("float", "f", "sqrtf","acosf", "%f", max_dimension);
+    str_concat(to_write, f_head);
+    destroy(f_head);
+    String i_head = generate_type_header("int", "i", "sqrt","acos", "%d", max_dimension);
+    str_concat(to_write, i_head);
+    destroy(i_head);
+
+    String code_head = generate_code_header();
+    str_concat(to_write, code_head);
+    destroy(code_head);
+
+    String db_code = generate_type_code("double", "d", "sqrt", "acos", "%lf", max_dimension);
+    str_concat(to_write, db_code);
+    destroy(db_code);
+    String f_code = generate_type_code("float", "f", "sqrtf","acosf", "%f", max_dimension);
+    str_concat(to_write, f_code);
+    destroy(f_code);
+    String i_code = generate_type_code("int", "i", "ssqrt","acos", "%d", max_dimension);
+    str_concat(to_write, i_code);
+    destroy(i_code);  
+
+    String code_foot = generate_code_footer();
+    str_concat(to_write,code_foot);
+    destroy(code_foot);
+
     write_string_to_file(to_write, "utils_math.h");
     destroy(to_write);
 }
