@@ -64,6 +64,9 @@ void * memdup(void * ptr, size_t size);
 
 #define make_with_capacity(T,cap) {global_alloc(cap,sizeof(T)), 0, cap, 0}
 
+#define arena_make(arena, T) {0,0,0, arena}
+
+#define arena_make_with_capacity(arena, T, cap){arena_alloc(cap*sizeof(T)), 0, cap, arena}
 #define clone(vec) {memdup(vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 
 #define append(vec, value)\
@@ -115,6 +118,7 @@ void _strconcat(String * a, const char* b, size_t b_size);
 String string_format(const char * fmt, ...);
 bool StringEquals(String a, String b);
 String RandomString(int minlen, int maxlen);
+
 #define str_concat(a, b)\
 	_strconcat(&a,(const char *)b, sizeof(b[0]));
 
@@ -322,9 +326,23 @@ void*memdup(void * ptr, size_t size){
 Arena stuff
 */
 Arena * create_arena(){
-    char * buffer = (char *)malloc(4096);
+    char * buffer = (char *)global_alloc(1,4096);
     char * next_ptr = buffer;
     char * end = buffer+4096;
+    char * previous_allocation = 0;
+    struct Arena * next = 0;
+    Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
+    *out = (Arena){buffer, next_ptr, end, previous_allocation, next};
+    return out;
+}
+Arena * create_arena_sized(size_t reqsize){
+    size_t size = 4096;
+    while(size<=reqsize){
+        size *= 2;
+    }
+    char * buffer = (char *)global_alloc(1,size);
+    char * next_ptr = buffer;
+    char * end = buffer+size;
     char * previous_allocation = 0;
     struct Arena * next = 0;
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
@@ -341,13 +359,13 @@ void free_arena(Arena * arena){
 }
 void * arena_alloc(Arena * arena, size_t size){
     if(!arena){
-        return malloc(size);
+        return global_alloc(1,size);
     }
     size_t act_sz = size+(8-size%8);
     char * previous = arena->next_ptr;
     if(previous + act_sz>arena->end){
         if (!arena->next){
-            arena->next = create_arena();
+            arena->next = create_arena_sized(size);
         }
         if (arena->next){
             return arena_alloc(arena->next, size);
@@ -364,7 +382,7 @@ void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new
         return global_realloc(ptr,new_size);
     }
     size_t act_sz = new_size+(8-new_size%8);
-    if (arena->previous_allocation == ptr){
+    if (arena->previous_allocation == ptr && ptr){
         arena->next_ptr = (char*)ptr;
     }
     void * out = arena_alloc(arena, new_size);
