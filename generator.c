@@ -1,5 +1,5 @@
 #define CTILS_IMPLEMENTATION
-#include "utils.h"
+#include "legacy_utils.h"
 #include <stdio.h>
 String generate_pre_header_code(){
     return new_string("#pragma once\n#include \"utils.h\"\n#include <math.h>\n#include <complex.h>\n#include <stdio.h>\n//use #define UTILS_MATH_IMPLEMENTATION to compile\n\n");

@@ -20,6 +20,12 @@
         "vector": "c",
         "format": "c",
         "__locale": "c",
-        "ios": "c"
+        "ios": "c",
+        "__bit_reference": "c",
+        "optional": "c",
+        "variant": "c",
+        "memory": "c",
+        "system_error": "c",
+        "text_encoding": "c"
     }
 }
