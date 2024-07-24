@@ -66,7 +66,7 @@ void * memdup(void * ptr, size_t size);
 
 #define arena_make(arena, T) {0,0,0, arena}
 
-#define arena_make_with_capacity(arena, T, cap){arena_alloc(cap*sizeof(T)), 0, cap, arena}
+#define arena_make_with_capacity(arena, T, cap){arena_alloc(arena,cap*sizeof(T)), 0, cap, arena}
 #define clone(vec) {memdup(vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 
 #define append(vec, value)\
@@ -112,6 +112,10 @@ String stuff
 */
 
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
+String new_string_arena(Arena * arena,const char* str);
+String new_string_wide_arena(Arena * arena,const wchar_t* str);
+String string_format_arena(Arena * arena, const char * fmt, ...);
+String RandomStringArena(Arena * arena, int minlen, int maxlen);
 String new_string(const char* str);
 String new_string_wide(const wchar_t* str);
 void _strconcat(String * a, const char* b, size_t b_size);
@@ -503,19 +507,92 @@ int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
 /*
 String Stuff
 */
-
+#include <stdarg.h>
 String new_string(const char* str){
+	return new_string_arena(0, str);
+}
+String new_string_wide(const wchar_t* str){
+	return new_string_wide_arena(0, str);
+}
+String string_format(const char * fmt, ...){
+	String s =new_string("");
+	va_list args;
+	va_start(args, fmt);
+	int l = strlen(fmt);
+	for(int i = 0; i<l; i++){
+		if(fmt[i] != '%'){
+			str_append(s, fmt[i]);
+		}
+		else{
+			if(fmt[i+1] == 'c'){
+				char buff[2];
+				buff[0] = (char)(va_arg(args,int));
+				buff[1] = '\0';
+				str_concat(s, buff);
+				i++;
+			}
+			if(fmt[i+1] == 'l' && fmt[i+2] == 'u'){
+				char buff[128];
+				snprintf(buff,127, "%lu", va_arg(args,unsigned long));
+				str_concat(s,buff);
+				i+= 2;
+			}
+			if(fmt[i+1] == 'u'){		
+				char buff[128];
+				snprintf(buff,127, "%u", va_arg(args,unsigned int));
+				str_concat(s,buff);
+				i+= 1;
+			}
+			if(fmt[i+1] == 'l' && fmt[i+2] == 'd'){
+				char buff[128];
+				snprintf(buff,127, "%ld", va_arg(args,long));
+				str_concat(s,buff);
+				i+= 2;
+			}
+			if(fmt[i+1] == 'l' && fmt[i+2] == 's'){
+				str_concat(s,va_arg(args, wchar_t *));
+				i+= 2;
+			}
+			else if(fmt[i+1] == 's'){
+				char * s2 =  va_arg(args,char *);
+				str_concat(s, s2);
+				i++;
+			}
+			else if(fmt[i+1] == 'f'){
+				char buff[128];
+				snprintf(buff,127,"%f", va_arg(args,double));
+				str_concat(s,buff);
+				i++;
+			}
+			else if(fmt[i+1] == 'd'){
+				char buff[128];
+				snprintf(buff,127,"%d", va_arg(args,int));
+				str_concat(s,buff);
+				i++;
+			}
+			else if(fmt[i+1] == '%'){
+				append(s, '%');
+				i++;
+			}
+		}
+	}
+	va_end(args);
+	return s;
+}
+bool StringEquals(String a, String b);
+String RandomString(int minlen, int maxlen);
+String new_string_arena(Arena * arena,const char* str){
 	int l = strlen(str)+1;
-    String out = make_with_capacity(str_type,l);
+    String out = arena_make_with_capacity(arena,str_type,l);
 	for(int i = 0; i<l; i++){
 		append(out, (str_type)str[i]);
 	}
 	append(out, '\0');
 	return out;
 }
-String new_string_wide(const wchar_t* str){
+String new_string_wide_arena(Arena * arena,const wchar_t* str){
     int l = wcslen(str);
-	String out = make_with_capacity(str_type, l);
+	String out = arena_make_with_capacity(arena,str_type, l);
 	for(int i = 0; i<l; i++){
 		append(out, (str_type)str[i]);
 	}
@@ -554,8 +631,8 @@ void _strconcat(String * a, const char* b, size_t b_size){
 		}
 	}
 }
-String string_format(const char * fmt, ...){
-	String s =new_string("");
+String string_format_arena(Arena *arena,const char * fmt, ...){
+	String s =new_string_arena(arena,"");
 	va_list args;
 	va_start(args, fmt);
 	int l = strlen(fmt);
@@ -630,9 +707,9 @@ bool StringEquals(String a, String b){
 	}
 	return 1;
 }
-String RandomString(int minlen, int maxlen){
+String RandomStringArena(Arena * arena,int minlen, int maxlen){
 	int length = rand()%(maxlen-minlen)+minlen;
-	String out = make_with_capacity(str_type, length+1);
+	String out = arena_make_with_capacity(arena,str_type, length+1);
 	for(int i= 0; i<length+1; i++){
 		out.items[i] = 0;
 	}
@@ -646,6 +723,9 @@ String RandomString(int minlen, int maxlen){
 	}
 	out.items[length+1] = 0;
 	return out;
+}
+String RandomString(int min_len, int maxlen){
+	return RandomStringArena(0, min_len, maxlen);
 }
 /*
 IO FUNCTIONALITY

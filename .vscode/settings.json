@@ -27,6 +27,7 @@
         "memory": "c",
         "system_error": "c",
         "text_encoding": "c",
-        "__node_handle": "cpp"
+        "__node_handle": "cpp",
+        "stdio.h": "c"
     }
 }
