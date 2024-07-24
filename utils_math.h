@@ -104,6 +104,69 @@ vector7d vector7dNormalize(vector7d a);
 double vector7dAngle(vector7d a, vector7d b);
 void vector7dprint(vector7d v);
 
+
+typedef struct{
+    double x0;
+    double x1;
+    double x2;
+    double x3;
+    double x4;
+    double x5;
+    double x6;
+    double x7;
+}vector8d;
+vector8d vector8dAdd(vector8d a, vector8d b);
+vector8d vector8dSub(vector8d a, vector8d b);
+double vector8dDot(vector8d a, vector8d b);
+vector8d vector8dScale(double s, vector8d a);
+double vector8dLen(vector8d a);
+vector8d vector8dNormalize(vector8d a);
+double vector8dAngle(vector8d a, vector8d b);
+void vector8dprint(vector8d v);
+
+
+typedef struct{
+    double x0;
+    double x1;
+    double x2;
+    double x3;
+    double x4;
+    double x5;
+    double x6;
+    double x7;
+    double x8;
+}vector9d;
+vector9d vector9dAdd(vector9d a, vector9d b);
+vector9d vector9dSub(vector9d a, vector9d b);
+double vector9dDot(vector9d a, vector9d b);
+vector9d vector9dScale(double s, vector9d a);
+double vector9dLen(vector9d a);
+vector9d vector9dNormalize(vector9d a);
+double vector9dAngle(vector9d a, vector9d b);
+void vector9dprint(vector9d v);
+
+
+typedef struct{
+    double x0;
+    double x1;
+    double x2;
+    double x3;
+    double x4;
+    double x5;
+    double x6;
+    double x7;
+    double x8;
+    double x9;
+}vector10d;
+vector10d vector10dAdd(vector10d a, vector10d b);
+vector10d vector10dSub(vector10d a, vector10d b);
+double vector10dDot(vector10d a, vector10d b);
+vector10d vector10dScale(double s, vector10d a);
+double vector10dLen(vector10d a);
+vector10d vector10dNormalize(vector10d a);
+double vector10dAngle(vector10d a, vector10d b);
+void vector10dprint(vector10d v);
+
 typedef struct {
   double data[2][2];
 }matrix2x2d;
@@ -193,6 +256,51 @@ matrix7x7d matrix7x7dInverse(matrix7x7d a);
 matrix7x7d matrix7x7dDeterminant(matrix7x7d a);
 matrix7x7d matrix7x7dIdentity();
 matrix7x7d matrix7x7dTranpose(matrix7x7d a);
+
+typedef struct {
+  double data[8][8];
+}matrix8x8d;
+matrix8x8d matrix8x8dAdd(matrix8x8d a, matrix8x8d b);
+matrix8x8d matrix8x8dSub(matrix8x8d a, matrix8x8d b);
+matrix8x8d matrix8x8dMlt(matrix8x8d a, matrix8x8d b);
+vector8d matrix8x8dMltVec(matrix8x8d a, vector8d b);
+matrix8x8d matrix8x8dScale(double s, matrix8x8d a);
+vector8d matrix8x8dRow(matrix8x8d m,int row);
+vector8d matrix8x8dCol(matrix8x8d m, int col);
+matrix8x8d matrix8x8dInverse(matrix8x8d a);
+matrix8x8d matrix8x8dDeterminant(matrix8x8d a);
+matrix8x8d matrix8x8dIdentity();
+matrix8x8d matrix8x8dTranpose(matrix8x8d a);
+
+typedef struct {
+  double data[9][9];
+}matrix9x9d;
+matrix9x9d matrix9x9dAdd(matrix9x9d a, matrix9x9d b);
+matrix9x9d matrix9x9dSub(matrix9x9d a, matrix9x9d b);
+matrix9x9d matrix9x9dMlt(matrix9x9d a, matrix9x9d b);
+vector9d matrix9x9dMltVec(matrix9x9d a, vector9d b);
+matrix9x9d matrix9x9dScale(double s, matrix9x9d a);
+vector9d matrix9x9dRow(matrix9x9d m,int row);
+vector9d matrix9x9dCol(matrix9x9d m, int col);
+matrix9x9d matrix9x9dInverse(matrix9x9d a);
+matrix9x9d matrix9x9dDeterminant(matrix9x9d a);
+matrix9x9d matrix9x9dIdentity();
+matrix9x9d matrix9x9dTranpose(matrix9x9d a);
+
+typedef struct {
+  double data[10][10];
+}matrix10x10d;
+matrix10x10d matrix10x10dAdd(matrix10x10d a, matrix10x10d b);
+matrix10x10d matrix10x10dSub(matrix10x10d a, matrix10x10d b);
+matrix10x10d matrix10x10dMlt(matrix10x10d a, matrix10x10d b);
+vector10d matrix10x10dMltVec(matrix10x10d a, vector10d b);
+matrix10x10d matrix10x10dScale(double s, matrix10x10d a);
+vector10d matrix10x10dRow(matrix10x10d m,int row);
+vector10d matrix10x10dCol(matrix10x10d m, int col);
+matrix10x10d matrix10x10dInverse(matrix10x10d a);
+matrix10x10d matrix10x10dDeterminant(matrix10x10d a);
+matrix10x10d matrix10x10dIdentity();
+matrix10x10d matrix10x10dTranpose(matrix10x10d a);
 
 
 typedef struct{
@@ -293,6 +401,69 @@ vector7f vector7fNormalize(vector7f a);
 float vector7fAngle(vector7f a, vector7f b);
 void vector7fprint(vector7f v);
 
+
+typedef struct{
+    float x0;
+    float x1;
+    float x2;
+    float x3;
+    float x4;
+    float x5;
+    float x6;
+    float x7;
+}vector8f;
+vector8f vector8fAdd(vector8f a, vector8f b);
+vector8f vector8fSub(vector8f a, vector8f b);
+float vector8fDot(vector8f a, vector8f b);
+vector8f vector8fScale(float s, vector8f a);
+float vector8fLen(vector8f a);
+vector8f vector8fNormalize(vector8f a);
+float vector8fAngle(vector8f a, vector8f b);
+void vector8fprint(vector8f v);
+
+
+typedef struct{
+    float x0;
+    float x1;
+    float x2;
+    float x3;
+    float x4;
+    float x5;
+    float x6;
+    float x7;
+    float x8;
+}vector9f;
+vector9f vector9fAdd(vector9f a, vector9f b);
+vector9f vector9fSub(vector9f a, vector9f b);
+float vector9fDot(vector9f a, vector9f b);
+vector9f vector9fScale(float s, vector9f a);
+float vector9fLen(vector9f a);
+vector9f vector9fNormalize(vector9f a);
+float vector9fAngle(vector9f a, vector9f b);
+void vector9fprint(vector9f v);
+
+
+typedef struct{
+    float x0;
+    float x1;
+    float x2;
+    float x3;
+    float x4;
+    float x5;
+    float x6;
+    float x7;
+    float x8;
+    float x9;
+}vector10f;
+vector10f vector10fAdd(vector10f a, vector10f b);
+vector10f vector10fSub(vector10f a, vector10f b);
+float vector10fDot(vector10f a, vector10f b);
+vector10f vector10fScale(float s, vector10f a);
+float vector10fLen(vector10f a);
+vector10f vector10fNormalize(vector10f a);
+float vector10fAngle(vector10f a, vector10f b);
+void vector10fprint(vector10f v);
+
 typedef struct {
   float data[2][2];
 }matrix2x2f;
@@ -382,6 +553,51 @@ matrix7x7f matrix7x7fInverse(matrix7x7f a);
 matrix7x7f matrix7x7fDeterminant(matrix7x7f a);
 matrix7x7f matrix7x7fIdentity();
 matrix7x7f matrix7x7fTranpose(matrix7x7f a);
+
+typedef struct {
+  float data[8][8];
+}matrix8x8f;
+matrix8x8f matrix8x8fAdd(matrix8x8f a, matrix8x8f b);
+matrix8x8f matrix8x8fSub(matrix8x8f a, matrix8x8f b);
+matrix8x8f matrix8x8fMlt(matrix8x8f a, matrix8x8f b);
+vector8f matrix8x8fMltVec(matrix8x8f a, vector8f b);
+matrix8x8f matrix8x8fScale(float s, matrix8x8f a);
+vector8f matrix8x8fRow(matrix8x8f m,int row);
+vector8f matrix8x8fCol(matrix8x8f m, int col);
+matrix8x8f matrix8x8fInverse(matrix8x8f a);
+matrix8x8f matrix8x8fDeterminant(matrix8x8f a);
+matrix8x8f matrix8x8fIdentity();
+matrix8x8f matrix8x8fTranpose(matrix8x8f a);
+
+typedef struct {
+  float data[9][9];
+}matrix9x9f;
+matrix9x9f matrix9x9fAdd(matrix9x9f a, matrix9x9f b);
+matrix9x9f matrix9x9fSub(matrix9x9f a, matrix9x9f b);
+matrix9x9f matrix9x9fMlt(matrix9x9f a, matrix9x9f b);
+vector9f matrix9x9fMltVec(matrix9x9f a, vector9f b);
+matrix9x9f matrix9x9fScale(float s, matrix9x9f a);
+vector9f matrix9x9fRow(matrix9x9f m,int row);
+vector9f matrix9x9fCol(matrix9x9f m, int col);
+matrix9x9f matrix9x9fInverse(matrix9x9f a);
+matrix9x9f matrix9x9fDeterminant(matrix9x9f a);
+matrix9x9f matrix9x9fIdentity();
+matrix9x9f matrix9x9fTranpose(matrix9x9f a);
+
+typedef struct {
+  float data[10][10];
+}matrix10x10f;
+matrix10x10f matrix10x10fAdd(matrix10x10f a, matrix10x10f b);
+matrix10x10f matrix10x10fSub(matrix10x10f a, matrix10x10f b);
+matrix10x10f matrix10x10fMlt(matrix10x10f a, matrix10x10f b);
+vector10f matrix10x10fMltVec(matrix10x10f a, vector10f b);
+matrix10x10f matrix10x10fScale(float s, matrix10x10f a);
+vector10f matrix10x10fRow(matrix10x10f m,int row);
+vector10f matrix10x10fCol(matrix10x10f m, int col);
+matrix10x10f matrix10x10fInverse(matrix10x10f a);
+matrix10x10f matrix10x10fDeterminant(matrix10x10f a);
+matrix10x10f matrix10x10fIdentity();
+matrix10x10f matrix10x10fTranpose(matrix10x10f a);
 
 
 typedef struct{
@@ -482,6 +698,69 @@ vector7i vector7iNormalize(vector7i a);
 int vector7iAngle(vector7i a, vector7i b);
 void vector7iprint(vector7i v);
 
+
+typedef struct{
+    int x0;
+    int x1;
+    int x2;
+    int x3;
+    int x4;
+    int x5;
+    int x6;
+    int x7;
+}vector8i;
+vector8i vector8iAdd(vector8i a, vector8i b);
+vector8i vector8iSub(vector8i a, vector8i b);
+int vector8iDot(vector8i a, vector8i b);
+vector8i vector8iScale(int s, vector8i a);
+int vector8iLen(vector8i a);
+vector8i vector8iNormalize(vector8i a);
+int vector8iAngle(vector8i a, vector8i b);
+void vector8iprint(vector8i v);
+
+
+typedef struct{
+    int x0;
+    int x1;
+    int x2;
+    int x3;
+    int x4;
+    int x5;
+    int x6;
+    int x7;
+    int x8;
+}vector9i;
+vector9i vector9iAdd(vector9i a, vector9i b);
+vector9i vector9iSub(vector9i a, vector9i b);
+int vector9iDot(vector9i a, vector9i b);
+vector9i vector9iScale(int s, vector9i a);
+int vector9iLen(vector9i a);
+vector9i vector9iNormalize(vector9i a);
+int vector9iAngle(vector9i a, vector9i b);
+void vector9iprint(vector9i v);
+
+
+typedef struct{
+    int x0;
+    int x1;
+    int x2;
+    int x3;
+    int x4;
+    int x5;
+    int x6;
+    int x7;
+    int x8;
+    int x9;
+}vector10i;
+vector10i vector10iAdd(vector10i a, vector10i b);
+vector10i vector10iSub(vector10i a, vector10i b);
+int vector10iDot(vector10i a, vector10i b);
+vector10i vector10iScale(int s, vector10i a);
+int vector10iLen(vector10i a);
+vector10i vector10iNormalize(vector10i a);
+int vector10iAngle(vector10i a, vector10i b);
+void vector10iprint(vector10i v);
+
 typedef struct {
   int data[2][2];
 }matrix2x2i;
@@ -571,6 +850,51 @@ matrix7x7i matrix7x7iInverse(matrix7x7i a);
 matrix7x7i matrix7x7iDeterminant(matrix7x7i a);
 matrix7x7i matrix7x7iIdentity();
 matrix7x7i matrix7x7iTranpose(matrix7x7i a);
+
+typedef struct {
+  int data[8][8];
+}matrix8x8i;
+matrix8x8i matrix8x8iAdd(matrix8x8i a, matrix8x8i b);
+matrix8x8i matrix8x8iSub(matrix8x8i a, matrix8x8i b);
+matrix8x8i matrix8x8iMlt(matrix8x8i a, matrix8x8i b);
+vector8i matrix8x8iMltVec(matrix8x8i a, vector8i b);
+matrix8x8i matrix8x8iScale(int s, matrix8x8i a);
+vector8i matrix8x8iRow(matrix8x8i m,int row);
+vector8i matrix8x8iCol(matrix8x8i m, int col);
+matrix8x8i matrix8x8iInverse(matrix8x8i a);
+matrix8x8i matrix8x8iDeterminant(matrix8x8i a);
+matrix8x8i matrix8x8iIdentity();
+matrix8x8i matrix8x8iTranpose(matrix8x8i a);
+
+typedef struct {
+  int data[9][9];
+}matrix9x9i;
+matrix9x9i matrix9x9iAdd(matrix9x9i a, matrix9x9i b);
+matrix9x9i matrix9x9iSub(matrix9x9i a, matrix9x9i b);
+matrix9x9i matrix9x9iMlt(matrix9x9i a, matrix9x9i b);
+vector9i matrix9x9iMltVec(matrix9x9i a, vector9i b);
+matrix9x9i matrix9x9iScale(int s, matrix9x9i a);
+vector9i matrix9x9iRow(matrix9x9i m,int row);
+vector9i matrix9x9iCol(matrix9x9i m, int col);
+matrix9x9i matrix9x9iInverse(matrix9x9i a);
+matrix9x9i matrix9x9iDeterminant(matrix9x9i a);
+matrix9x9i matrix9x9iIdentity();
+matrix9x9i matrix9x9iTranpose(matrix9x9i a);
+
+typedef struct {
+  int data[10][10];
+}matrix10x10i;
+matrix10x10i matrix10x10iAdd(matrix10x10i a, matrix10x10i b);
+matrix10x10i matrix10x10iSub(matrix10x10i a, matrix10x10i b);
+matrix10x10i matrix10x10iMlt(matrix10x10i a, matrix10x10i b);
+vector10i matrix10x10iMltVec(matrix10x10i a, vector10i b);
+matrix10x10i matrix10x10iScale(int s, matrix10x10i a);
+vector10i matrix10x10iRow(matrix10x10i m,int row);
+vector10i matrix10x10iCol(matrix10x10i m, int col);
+matrix10x10i matrix10x10iInverse(matrix10x10i a);
+matrix10x10i matrix10x10iDeterminant(matrix10x10i a);
+matrix10x10i matrix10x10iIdentity();
+matrix10x10i matrix10x10iTranpose(matrix10x10i a);
 
 #ifdef UTILS_MATH_IMPLEMENTATION
 vector2d vector2dAdd(vector2d a, vector2d b){
@@ -799,6 +1123,219 @@ vector7d vector7dNormalize(vector7d a){return vector7dScale(1/vector7dLen(a),a);
 double vector7dAngle(vector7d a, vector7d b){a = vector7dNormalize(a); b = vector7dNormalize(b);return acos(vector7dDot(a,b));}
 void vector7dprint(vector7d v){
   printf("%lf, %lf, %lf, %lf, %lf, %lf, %lf",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6);
+}
+ 
+vector8d vector8dAdd(vector8d a, vector8d b){
+  vector8d out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  return out;
+}
+vector8d vector8dSub(vector8d a, vector8d b){
+  vector8d out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  return out;
+}
+vector8d vector8dScale(double s,vector8d a){
+  vector8d out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  return out;
+}
+double vector8dDot(vector8d a, vector8d b){
+  double out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  return out;
+}
+double vector8dLen(vector8d a){
+  double out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  return sqrt(out);
+}
+vector8d vector8dNormalize(vector8d a){return vector8dScale(1/vector8dLen(a),a);}
+double vector8dAngle(vector8d a, vector8d b){a = vector8dNormalize(a); b = vector8dNormalize(b);return acos(vector8dDot(a,b));}
+void vector8dprint(vector8d v){
+  printf("%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7);
+}
+ 
+vector9d vector9dAdd(vector9d a, vector9d b){
+  vector9d out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  out.x8 = a.x8+b.x8;
+  return out;
+}
+vector9d vector9dSub(vector9d a, vector9d b){
+  vector9d out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  out.x8 = a.x8-b.x8;
+  return out;
+}
+vector9d vector9dScale(double s,vector9d a){
+  vector9d out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  out.x8 = s*a.x8;
+  return out;
+}
+double vector9dDot(vector9d a, vector9d b){
+  double out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  out += a.x8*b.x8;
+  return out;
+}
+double vector9dLen(vector9d a){
+  double out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  out += a.x8*a.x8;
+  return sqrt(out);
+}
+vector9d vector9dNormalize(vector9d a){return vector9dScale(1/vector9dLen(a),a);}
+double vector9dAngle(vector9d a, vector9d b){a = vector9dNormalize(a); b = vector9dNormalize(b);return acos(vector9dDot(a,b));}
+void vector9dprint(vector9d v){
+  printf("%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7, v.x8);
+}
+ 
+vector10d vector10dAdd(vector10d a, vector10d b){
+  vector10d out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  out.x8 = a.x8+b.x8;
+  out.x9 = a.x9+b.x9;
+  return out;
+}
+vector10d vector10dSub(vector10d a, vector10d b){
+  vector10d out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  out.x8 = a.x8-b.x8;
+  out.x9 = a.x9-b.x9;
+  return out;
+}
+vector10d vector10dScale(double s,vector10d a){
+  vector10d out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  out.x8 = s*a.x8;
+  out.x9 = s*a.x9;
+  return out;
+}
+double vector10dDot(vector10d a, vector10d b){
+  double out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  out += a.x8*b.x8;
+  out += a.x9*b.x9;
+  return out;
+}
+double vector10dLen(vector10d a){
+  double out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  out += a.x8*a.x8;
+  out += a.x9*a.x9;
+  return sqrt(out);
+}
+vector10d vector10dNormalize(vector10d a){return vector10dScale(1/vector10dLen(a),a);}
+double vector10dAngle(vector10d a, vector10d b){a = vector10dNormalize(a); b = vector10dNormalize(b);return acos(vector10dDot(a,b));}
+void vector10dprint(vector10d v){
+  printf("%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7, v.x8, v.x9);
 }
  
 vector2d matrix2x2dCol(matrix2x2d v, int col){
@@ -1219,6 +1756,270 @@ matrix7x7d matrix7x7dTranspose(matrix7x7d a){    matrix7x7d out = {};
     }
     return out;
 }
+vector8d matrix8x8dCol(matrix8x8d v, int col){
+   vector8d out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+   return out;
+}
+vector8d matrix8x8dRow(matrix8x8d v, int row){
+   vector8d out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+   return out;
+}
+matrix8x8d matrix8x8dAdd(matrix8x8d a, matrix8x8d b){    matrix8x8d out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix8x8d matrix8x8dSub(matrix8x8d a, matrix8x8d b){    matrix8x8d out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector8d matrix8x8dMltVec(matrix8x8d a, vector8d b){
+  vector8d out = {};
+  out.x0 = vector8dDot(matrix8x8dRow(a, 0), b);  out.x1 = vector8dDot(matrix8x8dRow(a, 1), b);  out.x2 = vector8dDot(matrix8x8dRow(a, 2), b);  out.x3 = vector8dDot(matrix8x8dRow(a, 3), b);  out.x4 = vector8dDot(matrix8x8dRow(a, 4), b);  out.x5 = vector8dDot(matrix8x8dRow(a, 5), b);  out.x6 = vector8dDot(matrix8x8dRow(a, 6), b);  out.x7 = vector8dDot(matrix8x8dRow(a, 7), b); 
+  return out;
+}
+matrix8x8d matrix8x8dMlt(matrix8x8d a, matrix8x8d b){
+    matrix8x8d out = {};
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 8; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix8x8d matrix8x8dIdentity(){
+  matrix8x8d out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  return out;
+}
+matrix8x8d matrix8x8dScale(double s, matrix8x8d a){    matrix8x8d out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix8x8d matrix8x8dTranspose(matrix8x8d a){    matrix8x8d out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
+vector9d matrix9x9dCol(matrix9x9d v, int col){
+   vector9d out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+  out.x8 = v.data[8][col];
+   return out;
+}
+vector9d matrix9x9dRow(matrix9x9d v, int row){
+   vector9d out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+  out.x8 = v.data[row][8];
+   return out;
+}
+matrix9x9d matrix9x9dAdd(matrix9x9d a, matrix9x9d b){    matrix9x9d out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix9x9d matrix9x9dSub(matrix9x9d a, matrix9x9d b){    matrix9x9d out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector9d matrix9x9dMltVec(matrix9x9d a, vector9d b){
+  vector9d out = {};
+  out.x0 = vector9dDot(matrix9x9dRow(a, 0), b);  out.x1 = vector9dDot(matrix9x9dRow(a, 1), b);  out.x2 = vector9dDot(matrix9x9dRow(a, 2), b);  out.x3 = vector9dDot(matrix9x9dRow(a, 3), b);  out.x4 = vector9dDot(matrix9x9dRow(a, 4), b);  out.x5 = vector9dDot(matrix9x9dRow(a, 5), b);  out.x6 = vector9dDot(matrix9x9dRow(a, 6), b);  out.x7 = vector9dDot(matrix9x9dRow(a, 7), b);  out.x8 = vector9dDot(matrix9x9dRow(a, 8), b); 
+  return out;
+}
+matrix9x9d matrix9x9dMlt(matrix9x9d a, matrix9x9d b){
+    matrix9x9d out = {};
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 9; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix9x9d matrix9x9dIdentity(){
+  matrix9x9d out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  out.data[8][8] = 1;
+  return out;
+}
+matrix9x9d matrix9x9dScale(double s, matrix9x9d a){    matrix9x9d out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix9x9d matrix9x9dTranspose(matrix9x9d a){    matrix9x9d out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
+vector10d matrix10x10dCol(matrix10x10d v, int col){
+   vector10d out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+  out.x8 = v.data[8][col];
+  out.x9 = v.data[9][col];
+   return out;
+}
+vector10d matrix10x10dRow(matrix10x10d v, int row){
+   vector10d out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+  out.x8 = v.data[row][8];
+  out.x9 = v.data[row][9];
+   return out;
+}
+matrix10x10d matrix10x10dAdd(matrix10x10d a, matrix10x10d b){    matrix10x10d out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix10x10d matrix10x10dSub(matrix10x10d a, matrix10x10d b){    matrix10x10d out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector10d matrix10x10dMltVec(matrix10x10d a, vector10d b){
+  vector10d out = {};
+  out.x0 = vector10dDot(matrix10x10dRow(a, 0), b);  out.x1 = vector10dDot(matrix10x10dRow(a, 1), b);  out.x2 = vector10dDot(matrix10x10dRow(a, 2), b);  out.x3 = vector10dDot(matrix10x10dRow(a, 3), b);  out.x4 = vector10dDot(matrix10x10dRow(a, 4), b);  out.x5 = vector10dDot(matrix10x10dRow(a, 5), b);  out.x6 = vector10dDot(matrix10x10dRow(a, 6), b);  out.x7 = vector10dDot(matrix10x10dRow(a, 7), b);  out.x8 = vector10dDot(matrix10x10dRow(a, 8), b);  out.x9 = vector10dDot(matrix10x10dRow(a, 9), b); 
+  return out;
+}
+matrix10x10d matrix10x10dMlt(matrix10x10d a, matrix10x10d b){
+    matrix10x10d out = {};
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 10; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix10x10d matrix10x10dIdentity(){
+  matrix10x10d out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  out.data[8][8] = 1;
+  out.data[9][9] = 1;
+  return out;
+}
+matrix10x10d matrix10x10dScale(double s, matrix10x10d a){    matrix10x10d out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix10x10d matrix10x10dTranspose(matrix10x10d a){    matrix10x10d out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
 vector2f vector2fAdd(vector2f a, vector2f b){
   return (vector2f){a.x +b.x, a.y+b.y};
 }
@@ -1445,6 +2246,219 @@ vector7f vector7fNormalize(vector7f a){return vector7fScale(1/vector7fLen(a),a);
 float vector7fAngle(vector7f a, vector7f b){a = vector7fNormalize(a); b = vector7fNormalize(b);return acosf(vector7fDot(a,b));}
 void vector7fprint(vector7f v){
   printf("%f, %f, %f, %f, %f, %f, %f",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6);
+}
+ 
+vector8f vector8fAdd(vector8f a, vector8f b){
+  vector8f out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  return out;
+}
+vector8f vector8fSub(vector8f a, vector8f b){
+  vector8f out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  return out;
+}
+vector8f vector8fScale(float s,vector8f a){
+  vector8f out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  return out;
+}
+float vector8fDot(vector8f a, vector8f b){
+  float out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  return out;
+}
+float vector8fLen(vector8f a){
+  float out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  return sqrtf(out);
+}
+vector8f vector8fNormalize(vector8f a){return vector8fScale(1/vector8fLen(a),a);}
+float vector8fAngle(vector8f a, vector8f b){a = vector8fNormalize(a); b = vector8fNormalize(b);return acosf(vector8fDot(a,b));}
+void vector8fprint(vector8f v){
+  printf("%f, %f, %f, %f, %f, %f, %f, %f",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7);
+}
+ 
+vector9f vector9fAdd(vector9f a, vector9f b){
+  vector9f out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  out.x8 = a.x8+b.x8;
+  return out;
+}
+vector9f vector9fSub(vector9f a, vector9f b){
+  vector9f out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  out.x8 = a.x8-b.x8;
+  return out;
+}
+vector9f vector9fScale(float s,vector9f a){
+  vector9f out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  out.x8 = s*a.x8;
+  return out;
+}
+float vector9fDot(vector9f a, vector9f b){
+  float out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  out += a.x8*b.x8;
+  return out;
+}
+float vector9fLen(vector9f a){
+  float out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  out += a.x8*a.x8;
+  return sqrtf(out);
+}
+vector9f vector9fNormalize(vector9f a){return vector9fScale(1/vector9fLen(a),a);}
+float vector9fAngle(vector9f a, vector9f b){a = vector9fNormalize(a); b = vector9fNormalize(b);return acosf(vector9fDot(a,b));}
+void vector9fprint(vector9f v){
+  printf("%f, %f, %f, %f, %f, %f, %f, %f, %f",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7, v.x8);
+}
+ 
+vector10f vector10fAdd(vector10f a, vector10f b){
+  vector10f out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  out.x8 = a.x8+b.x8;
+  out.x9 = a.x9+b.x9;
+  return out;
+}
+vector10f vector10fSub(vector10f a, vector10f b){
+  vector10f out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  out.x8 = a.x8-b.x8;
+  out.x9 = a.x9-b.x9;
+  return out;
+}
+vector10f vector10fScale(float s,vector10f a){
+  vector10f out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  out.x8 = s*a.x8;
+  out.x9 = s*a.x9;
+  return out;
+}
+float vector10fDot(vector10f a, vector10f b){
+  float out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  out += a.x8*b.x8;
+  out += a.x9*b.x9;
+  return out;
+}
+float vector10fLen(vector10f a){
+  float out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  out += a.x8*a.x8;
+  out += a.x9*a.x9;
+  return sqrtf(out);
+}
+vector10f vector10fNormalize(vector10f a){return vector10fScale(1/vector10fLen(a),a);}
+float vector10fAngle(vector10f a, vector10f b){a = vector10fNormalize(a); b = vector10fNormalize(b);return acosf(vector10fDot(a,b));}
+void vector10fprint(vector10f v){
+  printf("%f, %f, %f, %f, %f, %f, %f, %f, %f, %f",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7, v.x8, v.x9);
 }
  
 vector2f matrix2x2fCol(matrix2x2f v, int col){
@@ -1865,6 +2879,270 @@ matrix7x7f matrix7x7fTranspose(matrix7x7f a){    matrix7x7f out = {};
     }
     return out;
 }
+vector8f matrix8x8fCol(matrix8x8f v, int col){
+   vector8f out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+   return out;
+}
+vector8f matrix8x8fRow(matrix8x8f v, int row){
+   vector8f out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+   return out;
+}
+matrix8x8f matrix8x8fAdd(matrix8x8f a, matrix8x8f b){    matrix8x8f out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix8x8f matrix8x8fSub(matrix8x8f a, matrix8x8f b){    matrix8x8f out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector8f matrix8x8fMltVec(matrix8x8f a, vector8f b){
+  vector8f out = {};
+  out.x0 = vector8fDot(matrix8x8fRow(a, 0), b);  out.x1 = vector8fDot(matrix8x8fRow(a, 1), b);  out.x2 = vector8fDot(matrix8x8fRow(a, 2), b);  out.x3 = vector8fDot(matrix8x8fRow(a, 3), b);  out.x4 = vector8fDot(matrix8x8fRow(a, 4), b);  out.x5 = vector8fDot(matrix8x8fRow(a, 5), b);  out.x6 = vector8fDot(matrix8x8fRow(a, 6), b);  out.x7 = vector8fDot(matrix8x8fRow(a, 7), b); 
+  return out;
+}
+matrix8x8f matrix8x8fMlt(matrix8x8f a, matrix8x8f b){
+    matrix8x8f out = {};
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 8; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix8x8f matrix8x8fIdentity(){
+  matrix8x8f out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  return out;
+}
+matrix8x8f matrix8x8fScale(float s, matrix8x8f a){    matrix8x8f out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix8x8f matrix8x8fTranspose(matrix8x8f a){    matrix8x8f out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
+vector9f matrix9x9fCol(matrix9x9f v, int col){
+   vector9f out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+  out.x8 = v.data[8][col];
+   return out;
+}
+vector9f matrix9x9fRow(matrix9x9f v, int row){
+   vector9f out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+  out.x8 = v.data[row][8];
+   return out;
+}
+matrix9x9f matrix9x9fAdd(matrix9x9f a, matrix9x9f b){    matrix9x9f out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix9x9f matrix9x9fSub(matrix9x9f a, matrix9x9f b){    matrix9x9f out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector9f matrix9x9fMltVec(matrix9x9f a, vector9f b){
+  vector9f out = {};
+  out.x0 = vector9fDot(matrix9x9fRow(a, 0), b);  out.x1 = vector9fDot(matrix9x9fRow(a, 1), b);  out.x2 = vector9fDot(matrix9x9fRow(a, 2), b);  out.x3 = vector9fDot(matrix9x9fRow(a, 3), b);  out.x4 = vector9fDot(matrix9x9fRow(a, 4), b);  out.x5 = vector9fDot(matrix9x9fRow(a, 5), b);  out.x6 = vector9fDot(matrix9x9fRow(a, 6), b);  out.x7 = vector9fDot(matrix9x9fRow(a, 7), b);  out.x8 = vector9fDot(matrix9x9fRow(a, 8), b); 
+  return out;
+}
+matrix9x9f matrix9x9fMlt(matrix9x9f a, matrix9x9f b){
+    matrix9x9f out = {};
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 9; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix9x9f matrix9x9fIdentity(){
+  matrix9x9f out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  out.data[8][8] = 1;
+  return out;
+}
+matrix9x9f matrix9x9fScale(float s, matrix9x9f a){    matrix9x9f out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix9x9f matrix9x9fTranspose(matrix9x9f a){    matrix9x9f out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
+vector10f matrix10x10fCol(matrix10x10f v, int col){
+   vector10f out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+  out.x8 = v.data[8][col];
+  out.x9 = v.data[9][col];
+   return out;
+}
+vector10f matrix10x10fRow(matrix10x10f v, int row){
+   vector10f out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+  out.x8 = v.data[row][8];
+  out.x9 = v.data[row][9];
+   return out;
+}
+matrix10x10f matrix10x10fAdd(matrix10x10f a, matrix10x10f b){    matrix10x10f out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix10x10f matrix10x10fSub(matrix10x10f a, matrix10x10f b){    matrix10x10f out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector10f matrix10x10fMltVec(matrix10x10f a, vector10f b){
+  vector10f out = {};
+  out.x0 = vector10fDot(matrix10x10fRow(a, 0), b);  out.x1 = vector10fDot(matrix10x10fRow(a, 1), b);  out.x2 = vector10fDot(matrix10x10fRow(a, 2), b);  out.x3 = vector10fDot(matrix10x10fRow(a, 3), b);  out.x4 = vector10fDot(matrix10x10fRow(a, 4), b);  out.x5 = vector10fDot(matrix10x10fRow(a, 5), b);  out.x6 = vector10fDot(matrix10x10fRow(a, 6), b);  out.x7 = vector10fDot(matrix10x10fRow(a, 7), b);  out.x8 = vector10fDot(matrix10x10fRow(a, 8), b);  out.x9 = vector10fDot(matrix10x10fRow(a, 9), b); 
+  return out;
+}
+matrix10x10f matrix10x10fMlt(matrix10x10f a, matrix10x10f b){
+    matrix10x10f out = {};
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 10; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix10x10f matrix10x10fIdentity(){
+  matrix10x10f out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  out.data[8][8] = 1;
+  out.data[9][9] = 1;
+  return out;
+}
+matrix10x10f matrix10x10fScale(float s, matrix10x10f a){    matrix10x10f out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix10x10f matrix10x10fTranspose(matrix10x10f a){    matrix10x10f out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
 vector2i vector2iAdd(vector2i a, vector2i b){
   return (vector2i){a.x +b.x, a.y+b.y};
 }
@@ -2091,6 +3369,219 @@ vector7i vector7iNormalize(vector7i a){return vector7iScale(1/vector7iLen(a),a);
 int vector7iAngle(vector7i a, vector7i b){a = vector7iNormalize(a); b = vector7iNormalize(b);return acos(vector7iDot(a,b));}
 void vector7iprint(vector7i v){
   printf("%d, %d, %d, %d, %d, %d, %d",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6);
+}
+ 
+vector8i vector8iAdd(vector8i a, vector8i b){
+  vector8i out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  return out;
+}
+vector8i vector8iSub(vector8i a, vector8i b){
+  vector8i out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  return out;
+}
+vector8i vector8iScale(int s,vector8i a){
+  vector8i out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  return out;
+}
+int vector8iDot(vector8i a, vector8i b){
+  int out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  return out;
+}
+int vector8iLen(vector8i a){
+  int out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  return ssqrt(out);
+}
+vector8i vector8iNormalize(vector8i a){return vector8iScale(1/vector8iLen(a),a);}
+int vector8iAngle(vector8i a, vector8i b){a = vector8iNormalize(a); b = vector8iNormalize(b);return acos(vector8iDot(a,b));}
+void vector8iprint(vector8i v){
+  printf("%d, %d, %d, %d, %d, %d, %d, %d",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7);
+}
+ 
+vector9i vector9iAdd(vector9i a, vector9i b){
+  vector9i out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  out.x8 = a.x8+b.x8;
+  return out;
+}
+vector9i vector9iSub(vector9i a, vector9i b){
+  vector9i out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  out.x8 = a.x8-b.x8;
+  return out;
+}
+vector9i vector9iScale(int s,vector9i a){
+  vector9i out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  out.x8 = s*a.x8;
+  return out;
+}
+int vector9iDot(vector9i a, vector9i b){
+  int out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  out += a.x8*b.x8;
+  return out;
+}
+int vector9iLen(vector9i a){
+  int out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  out += a.x8*a.x8;
+  return ssqrt(out);
+}
+vector9i vector9iNormalize(vector9i a){return vector9iScale(1/vector9iLen(a),a);}
+int vector9iAngle(vector9i a, vector9i b){a = vector9iNormalize(a); b = vector9iNormalize(b);return acos(vector9iDot(a,b));}
+void vector9iprint(vector9i v){
+  printf("%d, %d, %d, %d, %d, %d, %d, %d, %d",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7, v.x8);
+}
+ 
+vector10i vector10iAdd(vector10i a, vector10i b){
+  vector10i out;
+  out.x0 = a.x0+b.x0;
+  out.x1 = a.x1+b.x1;
+  out.x2 = a.x2+b.x2;
+  out.x3 = a.x3+b.x3;
+  out.x4 = a.x4+b.x4;
+  out.x5 = a.x5+b.x5;
+  out.x6 = a.x6+b.x6;
+  out.x7 = a.x7+b.x7;
+  out.x8 = a.x8+b.x8;
+  out.x9 = a.x9+b.x9;
+  return out;
+}
+vector10i vector10iSub(vector10i a, vector10i b){
+  vector10i out;
+  out.x0 = a.x0-b.x0;
+  out.x1 = a.x1-b.x1;
+  out.x2 = a.x2-b.x2;
+  out.x3 = a.x3-b.x3;
+  out.x4 = a.x4-b.x4;
+  out.x5 = a.x5-b.x5;
+  out.x6 = a.x6-b.x6;
+  out.x7 = a.x7-b.x7;
+  out.x8 = a.x8-b.x8;
+  out.x9 = a.x9-b.x9;
+  return out;
+}
+vector10i vector10iScale(int s,vector10i a){
+  vector10i out;
+  out.x0 = s*a.x0;
+  out.x1 = s*a.x1;
+  out.x2 = s*a.x2;
+  out.x3 = s*a.x3;
+  out.x4 = s*a.x4;
+  out.x5 = s*a.x5;
+  out.x6 = s*a.x6;
+  out.x7 = s*a.x7;
+  out.x8 = s*a.x8;
+  out.x9 = s*a.x9;
+  return out;
+}
+int vector10iDot(vector10i a, vector10i b){
+  int out = 0;
+  out += a.x0*b.x0;
+  out += a.x1*b.x1;
+  out += a.x2*b.x2;
+  out += a.x3*b.x3;
+  out += a.x4*b.x4;
+  out += a.x5*b.x5;
+  out += a.x6*b.x6;
+  out += a.x7*b.x7;
+  out += a.x8*b.x8;
+  out += a.x9*b.x9;
+  return out;
+}
+int vector10iLen(vector10i a){
+  int out = 0;
+  out += a.x0*a.x0;
+  out += a.x1*a.x1;
+  out += a.x2*a.x2;
+  out += a.x3*a.x3;
+  out += a.x4*a.x4;
+  out += a.x5*a.x5;
+  out += a.x6*a.x6;
+  out += a.x7*a.x7;
+  out += a.x8*a.x8;
+  out += a.x9*a.x9;
+  return ssqrt(out);
+}
+vector10i vector10iNormalize(vector10i a){return vector10iScale(1/vector10iLen(a),a);}
+int vector10iAngle(vector10i a, vector10i b){a = vector10iNormalize(a); b = vector10iNormalize(b);return acos(vector10iDot(a,b));}
+void vector10iprint(vector10i v){
+  printf("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d",v.x0, v.x1, v.x2, v.x3, v.x4, v.x5, v.x6, v.x7, v.x8, v.x9);
 }
  
 vector2i matrix2x2iCol(matrix2x2i v, int col){
@@ -2506,6 +3997,270 @@ matrix7x7i matrix7x7iScale(int s, matrix7x7i a){    matrix7x7i out = {};
 matrix7x7i matrix7x7iTranspose(matrix7x7i a){    matrix7x7i out = {};
     for(int y = 0; y<7; y++){
         for(int x = 0;x<7; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
+vector8i matrix8x8iCol(matrix8x8i v, int col){
+   vector8i out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+   return out;
+}
+vector8i matrix8x8iRow(matrix8x8i v, int row){
+   vector8i out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+   return out;
+}
+matrix8x8i matrix8x8iAdd(matrix8x8i a, matrix8x8i b){    matrix8x8i out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix8x8i matrix8x8iSub(matrix8x8i a, matrix8x8i b){    matrix8x8i out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector8i matrix8x8iMltVec(matrix8x8i a, vector8i b){
+  vector8i out = {};
+  out.x0 = vector8iDot(matrix8x8iRow(a, 0), b);  out.x1 = vector8iDot(matrix8x8iRow(a, 1), b);  out.x2 = vector8iDot(matrix8x8iRow(a, 2), b);  out.x3 = vector8iDot(matrix8x8iRow(a, 3), b);  out.x4 = vector8iDot(matrix8x8iRow(a, 4), b);  out.x5 = vector8iDot(matrix8x8iRow(a, 5), b);  out.x6 = vector8iDot(matrix8x8iRow(a, 6), b);  out.x7 = vector8iDot(matrix8x8iRow(a, 7), b); 
+  return out;
+}
+matrix8x8i matrix8x8iMlt(matrix8x8i a, matrix8x8i b){
+    matrix8x8i out = {};
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 8; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix8x8i matrix8x8iIdentity(){
+  matrix8x8i out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  return out;
+}
+matrix8x8i matrix8x8iScale(int s, matrix8x8i a){    matrix8x8i out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix8x8i matrix8x8iTranspose(matrix8x8i a){    matrix8x8i out = {};
+    for(int y = 0; y<8; y++){
+        for(int x = 0;x<8; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
+vector9i matrix9x9iCol(matrix9x9i v, int col){
+   vector9i out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+  out.x8 = v.data[8][col];
+   return out;
+}
+vector9i matrix9x9iRow(matrix9x9i v, int row){
+   vector9i out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+  out.x8 = v.data[row][8];
+   return out;
+}
+matrix9x9i matrix9x9iAdd(matrix9x9i a, matrix9x9i b){    matrix9x9i out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix9x9i matrix9x9iSub(matrix9x9i a, matrix9x9i b){    matrix9x9i out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector9i matrix9x9iMltVec(matrix9x9i a, vector9i b){
+  vector9i out = {};
+  out.x0 = vector9iDot(matrix9x9iRow(a, 0), b);  out.x1 = vector9iDot(matrix9x9iRow(a, 1), b);  out.x2 = vector9iDot(matrix9x9iRow(a, 2), b);  out.x3 = vector9iDot(matrix9x9iRow(a, 3), b);  out.x4 = vector9iDot(matrix9x9iRow(a, 4), b);  out.x5 = vector9iDot(matrix9x9iRow(a, 5), b);  out.x6 = vector9iDot(matrix9x9iRow(a, 6), b);  out.x7 = vector9iDot(matrix9x9iRow(a, 7), b);  out.x8 = vector9iDot(matrix9x9iRow(a, 8), b); 
+  return out;
+}
+matrix9x9i matrix9x9iMlt(matrix9x9i a, matrix9x9i b){
+    matrix9x9i out = {};
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 9; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix9x9i matrix9x9iIdentity(){
+  matrix9x9i out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  out.data[8][8] = 1;
+  return out;
+}
+matrix9x9i matrix9x9iScale(int s, matrix9x9i a){    matrix9x9i out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix9x9i matrix9x9iTranspose(matrix9x9i a){    matrix9x9i out = {};
+    for(int y = 0; y<9; y++){
+        for(int x = 0;x<9; x++){
+                out.data[y][x] = a.data[x][y];
+        }
+    }
+    return out;
+}
+vector10i matrix10x10iCol(matrix10x10i v, int col){
+   vector10i out = {};
+  out.x0 = v.data[0][col];
+  out.x1 = v.data[1][col];
+  out.x2 = v.data[2][col];
+  out.x3 = v.data[3][col];
+  out.x4 = v.data[4][col];
+  out.x5 = v.data[5][col];
+  out.x6 = v.data[6][col];
+  out.x7 = v.data[7][col];
+  out.x8 = v.data[8][col];
+  out.x9 = v.data[9][col];
+   return out;
+}
+vector10i matrix10x10iRow(matrix10x10i v, int row){
+   vector10i out = {};
+  out.x0 = v.data[row][0];
+  out.x1 = v.data[row][1];
+  out.x2 = v.data[row][2];
+  out.x3 = v.data[row][3];
+  out.x4 = v.data[row][4];
+  out.x5 = v.data[row][5];
+  out.x6 = v.data[row][6];
+  out.x7 = v.data[row][7];
+  out.x8 = v.data[row][8];
+  out.x9 = v.data[row][9];
+   return out;
+}
+matrix10x10i matrix10x10iAdd(matrix10x10i a, matrix10x10i b){    matrix10x10i out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]+b.data[y][x];
+        }
+    }
+    return out;
+}
+matrix10x10i matrix10x10iSub(matrix10x10i a, matrix10x10i b){    matrix10x10i out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]-b.data[y][x];
+        }
+    }
+    return out;
+}
+vector10i matrix10x10iMltVec(matrix10x10i a, vector10i b){
+  vector10i out = {};
+  out.x0 = vector10iDot(matrix10x10iRow(a, 0), b);  out.x1 = vector10iDot(matrix10x10iRow(a, 1), b);  out.x2 = vector10iDot(matrix10x10iRow(a, 2), b);  out.x3 = vector10iDot(matrix10x10iRow(a, 3), b);  out.x4 = vector10iDot(matrix10x10iRow(a, 4), b);  out.x5 = vector10iDot(matrix10x10iRow(a, 5), b);  out.x6 = vector10iDot(matrix10x10iRow(a, 6), b);  out.x7 = vector10iDot(matrix10x10iRow(a, 7), b);  out.x8 = vector10iDot(matrix10x10iRow(a, 8), b);  out.x9 = vector10iDot(matrix10x10iRow(a, 9), b); 
+  return out;
+}
+matrix10x10i matrix10x10iMlt(matrix10x10i a, matrix10x10i b){
+    matrix10x10i out = {};
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            out.data[i][j] = 0;
+            for (int k = 0; k < 10; k++) {
+                out.data[i][j] += a.data[i][k] * b.data[k][j];
+            }
+        }
+    }
+    return out;
+}
+matrix10x10i matrix10x10iIdentity(){
+  matrix10x10i out = {};
+  out.data[0][0] = 1;
+  out.data[1][1] = 1;
+  out.data[2][2] = 1;
+  out.data[3][3] = 1;
+  out.data[4][4] = 1;
+  out.data[5][5] = 1;
+  out.data[6][6] = 1;
+  out.data[7][7] = 1;
+  out.data[8][8] = 1;
+  out.data[9][9] = 1;
+  return out;
+}
+matrix10x10i matrix10x10iScale(int s, matrix10x10i a){    matrix10x10i out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
+                out.data[y][x] = a.data[y][x]*s;
+        }
+    }
+    return out;
+}
+matrix10x10i matrix10x10iTranspose(matrix10x10i a){    matrix10x10i out = {};
+    for(int y = 0; y<10; y++){
+        for(int x = 0;x<10; x++){
                 out.data[y][x] = a.data[x][y];
         }
     }

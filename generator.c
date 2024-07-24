@@ -644,7 +644,7 @@ String generate_type_code(const char * type_name, const char * type_alias, const
     return to_write;
 }
 int main(int argc, const char ** argv){
-    const int max_dimension = 8;
+    const int max_dimension = 11;
     String to_write = new_string("");
     String header = generate_pre_header_code();
     str_concat(to_write, header);
