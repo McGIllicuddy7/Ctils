@@ -13,6 +13,7 @@
 */
 void * debug_alloc(size_t count, size_t size);
 void debug_global_free(void * ptr);
+void *debug_realloc(void * ptr, size_t size);
 void debug_alloc_and_global_free_counts();
 #ifndef global_alloc
 #define global_alloc(count,sz) debug_alloc(count, sz)
@@ -20,11 +21,13 @@ void debug_alloc_and_global_free_counts();
 #ifndef global_free
 #define global_free(ptr) debug_global_free(ptr)
 #endif
+#ifndef global_realloc
+#define global_realloc(ptr, sz) debug_realloc(ptr, sz);
+#endif
 #ifndef str_type
 #define str_type char
 #endif
 #define nil 0
-#define let auto
 typedef unsigned char Byte;
 
 /*
@@ -49,7 +52,7 @@ void * memdup(void * ptr, size_t size);
 #define append(vec, value)\
  {if(vec.capacity<vec.length+1){\
     if (vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}\
-    vec.items = realloc(vec.items,vec.capacity*sizeof(vec.items[0]));\
+    vec.items = global_realloc(vec.items,vec.capacity*sizeof(vec.items[0]));\
     } \
     vec.items[vec.length++] = value;}
 
@@ -58,7 +61,7 @@ void * memdup(void * ptr, size_t size);
 #define append_slice(vec, other_items, other_len)\
  {if(vec.capacity<vec.length+other_len){\
     while (vec.capacity<vec.length+other_len){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
-    vec.items = realloc(vec.items,vec.capacity*sizeof(vec.items[0]));}\
+    vec.items = global_realloc(vec.items,vec.capacity*sizeof(vec.items[0]));}\
     memcpy(&vec.items[vec.length], other_items, sizeof(vec.items[0])*other_len);\
     vec.length += other_len; } 
 
@@ -72,12 +75,12 @@ void * memdup(void * ptr, size_t size);
     }
 #define insert(vec, idx, item)\
     assert(idx<vec.length+1 && idx>=0)\
-    if(vec.length+1> vec.capacity){vec.items = realloc(vec.items, (vec.capacity+1)*sizeof(vec.items[0]);)}\
+    if(vec.length+1> vec.capacity){vec.items = global_realloc(vec.items, (vec.capacity+1)*sizeof(vec.items[0]);)}\
     memove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item;
 #define resize(vec, len)\
 vec.length= len;\
 while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
-vec.items = realloc(vec.items, vec.capacity*sizeof(vec.items[0]));
+vec.items = global_realloc(vec.items, vec.capacity*sizeof(vec.items[0]));
 
 #define len(vec) (vec).length
 
@@ -227,6 +230,12 @@ void * debug_alloc(size_t count, size_t size){
 void debug_global_free(void * ptr){
 	global_free_count++;
 	free(ptr);
+}
+void *debug_realloc(void * ptr, size_t size){
+    if(!ptr){
+        alloc_count++;
+    }
+    return realloc(ptr, size);
 }
 void debug_alloc_and_global_free_counts(){
 	printf("alloc count: %d, global_free_count: %d\n", alloc_count, global_free_count);
