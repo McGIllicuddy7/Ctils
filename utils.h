@@ -36,32 +36,50 @@ Memory stuff
 
 void mem_shift(void * start, size_t size, size_t count, size_t distance);
 /*
+Arena stuff 
+*/
+
+typedef struct Arena{
+    char* buffer;
+    char* next_ptr;
+    char*end;
+    char* previous_allocation;
+    struct Arena * next;
+} Arena;
+Arena * create_arena();
+void free_arena(Arena * arena);
+void * arena_alloc(Arena * arena, size_t size);
+void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size);
+void arena_free(Arena * arena, void * ptr);
+void arena_reset(Arena * arena);
+/*
 Slice stuff
 */
 
 void * memdup(void * ptr, size_t size);
 
-#define CreateVecType(T) typedef struct {T * items; size_t length; size_t capacity;} T##Vec
+#define CreateVecType(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
 
 #define make(T) {0}
 
-#define make_with_capacity(T,cap) {global_alloc(cap,sizeof(T)), 0, cap}
+#define make_with_capacity(T,cap) {global_alloc(cap,sizeof(T)), 0, cap, 0}
 
 #define clone(vec) {memdup(vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 
 #define append(vec, value)\
  {if(vec.capacity<vec.length+1){\
-    if (vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}\
-    vec.items = global_realloc(vec.items,vec.capacity*sizeof(vec.items[0]));\
+    if (vec.capacity != 0){ vec.items = arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
+     else{vec.capacity = 1;vec.items = arena_realloc(vec.arena, vec.items, 0, 1*sizeof(vec.items[0]));}\
     } \
     vec.items[vec.length++] = value;}
 
-#define destroy(vec) global_free((vec).items); (vec) = (typeof(vec)){0,0,0};
+#define destroy(vec) arena_free((vec).arena,(vec).items); (vec) = (typeof(vec)){0,0,0,0};
 
 #define append_slice(vec, other_items, other_len)\
  {if(vec.capacity<vec.length+other_len){\
+    size_t previous = vec.capacity*sizeof(vec.items[0]);\
     while (vec.capacity<vec.length+other_len){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
-    vec.items = global_realloc(vec.items,vec.capacity*sizeof(vec.items[0]));}\
+    vec.items = arena_realloc(vec.arena,vec.items,previous,vec.capacity*sizeof(vec.items[0]));}\
     memcpy(&vec.items[vec.length], other_items, sizeof(vec.items[0])*other_len);\
     vec.length += other_len; } 
 
@@ -73,14 +91,16 @@ void * memdup(void * ptr, size_t size);
     } else if (idx == 0 && vec.length>0){memmove(&vec.items[0], &vec.items[1], (vec.length-1)*sizeof(vec.items[0])); vec.length--;}else{\
         assert(idx>=0 &&idx <vec.length);\
     }
+
 #define insert(vec, idx, item)\
     assert(idx<vec.length+1 && idx>=0)\
-    if(vec.length+1> vec.capacity){vec.items = global_realloc(vec.items, (vec.capacity+1)*sizeof(vec.items[0]);)}\
-    memove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item;
-#define resize(vec, len)\
+    if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]); vec.capacity++;)}\
+    memove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
+#define resize(vec, len){\
 vec.length= len;\
+size_t previous_cap = vec.capacity;\
 while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
-vec.items = global_realloc(vec.items, vec.capacity*sizeof(vec.items[0]));
+vec.items = arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 
 #define len(vec) (vec).length
 
@@ -88,7 +108,7 @@ vec.items = global_realloc(vec.items, vec.capacity*sizeof(vec.items[0]));
 String stuff
 */
 
-typedef struct{str_type * items; size_t length; size_t capacity;}String;
+typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
 String new_string(const char* str);
 String new_string_wide(const wchar_t* str);
 void _strconcat(String * a, const char* b, size_t b_size);
@@ -298,9 +318,69 @@ void*memdup(void * ptr, size_t size){
         return out;
     }
 }
-
-
-
+/*
+Arena stuff
+*/
+Arena * create_arena(){
+    char * buffer = (char *)malloc(4096);
+    char * next_ptr = buffer;
+    char * end = buffer+4096;
+    char * previous_allocation = 0;
+    struct Arena * next = 0;
+    Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
+    *out = (Arena){buffer, next_ptr, end, previous_allocation, next};
+    return out;
+}
+void free_arena(Arena * arena){
+    if (arena == 0){
+        return;
+    }
+    global_free(arena->buffer);
+    free_arena(arena->next);
+    global_free(arena);
+}
+void * arena_alloc(Arena * arena, size_t size){
+    if(!arena){
+        return malloc(size);
+    }
+    size_t act_sz = size+(8-size%8);
+    char * previous = arena->next_ptr;
+    if(previous + act_sz>arena->end){
+        if (!arena->next){
+            arena->next = create_arena();
+        }
+        if (arena->next){
+            return arena_alloc(arena->next, size);
+        } else{
+            return NULL;
+        }
+    }
+    arena->next_ptr += act_sz;
+    arena->previous_allocation = previous;
+    return previous;
+}
+void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size){
+    if(!arena){
+        return global_realloc(ptr,new_size);
+    }
+    size_t act_sz = new_size+(8-new_size%8);
+    if (arena->previous_allocation == ptr){
+        arena->next_ptr = (char*)ptr;
+    }
+    void * out = arena_alloc(arena, new_size);
+    memmove(out, ptr, previous_size);
+    return out;
+}
+void arena_reset(Arena * arena){
+    free_arena(arena->next);
+    arena->next_ptr= arena->buffer;
+    arena->previous_allocation = 0;
+}
+void arena_free(Arena * arena, void * ptr){
+    if(!arena){
+        global_free(ptr);
+    }
+}
 /*
 Hashing
 */
