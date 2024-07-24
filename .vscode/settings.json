@@ -26,6 +26,7 @@
         "variant": "c",
         "memory": "c",
         "system_error": "c",
-        "text_encoding": "c"
+        "text_encoding": "c",
+        "__node_handle": "cpp"
     }
 }

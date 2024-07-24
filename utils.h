@@ -189,9 +189,46 @@ static void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
 	size_t hash = hashval%table->TableSize;\
 	T##U##KeyValuePair pair = (T##U##KeyValuePair){.key = key,.value = value};\
 	T##U##KeyValuePairVec tmp = table->Table[hash];\
-	int tl = len(tmp);\
-	append(tmp, pair);\
-	table->Table[hash] = tmp;\
+    int idx = -1;\
+    for(int i =0; i<table->Table[hash].length; i++){\
+        if(table->eq_func(key, table->Table[hash].items[i].key)){\
+            idx = i;\
+            break;\
+        }\
+    }\
+    if (idx>-1){\
+        table->Table[hash].items[idx].value = value; \
+    } else{\
+	    append(tmp, pair);\
+        table->Table[hash] = tmp;\
+    }\
+}\
+static bool T##U##HashTable_contains(T##U##HashTable * table, T key){\
+	size_t hashval = table->hash_func(key);\
+	size_t hash = hashval%table->TableSize;\
+	T##U##KeyValuePairVec tmp = table->Table[hash];\
+    int idx = -1;\
+    for(int i =0; i<table->Table[hash].length; i++){\
+        if(table->eq_func(key, table->Table[hash].items[i].key)){\
+            idx = i;\
+            break;\
+        }\
+    }\
+    return idx != -1;\
+}\
+static void T##U##HashTable_remove(T##U##HashTable * table, T key){\
+    size_t hashval = table->hash_func(key);\
+	size_t hash = hashval%table->TableSize;\
+    int idx = -1;\
+    for(int i =0; i<table->Table[hash].length; i++){\
+        if( table->eq_func(key, table->Table[hash].items[i].key)){\
+            idx = i;\
+            break;\
+        }\
+    }\
+    if(idx>=0){\
+        remove(table->Table[hash], idx);\
+    }\
 }\
 static void T##U##HashTable_destroy(T##U##HashTable * table){\
 	for(int i =0; i<table->TableSize; i++){\
