@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <wchar.h>
 #include <sys/time.h>
+#include <errno.h>
 /*
 	Initial Defines
 */
@@ -96,9 +97,9 @@ void * memdup(void * ptr, size_t size);
     }
 
 #define insert(vec, idx, item)\
-    assert(idx<vec.length+1 && idx>=0)\
-    if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]); vec.capacity++;)}\
-    memove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
+    assert(idx<vec.length+1 && idx>=0);\
+    if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
+    memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
 #define resize(vec, len){\
 vec.length= len;\
 size_t previous_cap = vec.capacity;\
@@ -446,6 +447,9 @@ size_t HashString(String str){
 /*
 Utils
 */
+#ifdef __linux__
+int fileno(FILE * file);
+#endif
 long get_time_microseconds(){
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
@@ -742,6 +746,10 @@ bool write_string_to_file(const char * s, const char * file_name){
 }
 String read_file_to_string(const char *file_name){
 	FILE *f= fopen(file_name, "rb");
+	if (!f){
+		perror("ERROR:");
+		exit(1);
+	}
 	fseek(f, 0, SEEK_END);
 	size_t fsize = ftell(f);
 	fseek(f, 0, SEEK_SET); 
