@@ -9,6 +9,7 @@
 #include <wchar.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <stdint.h>
 /*
 	Initial Defines
 */
@@ -30,7 +31,16 @@ void debug_alloc_and_global_free_counts();
 #endif
 #define nil 0
 typedef unsigned char Byte;
-
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+typedef int128_t i128;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef uint128_t u128;
 /*
 Memory stuff
 */
