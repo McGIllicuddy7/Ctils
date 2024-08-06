@@ -66,8 +66,9 @@ void mem_free(void * ptr){
 	free_list = ptr-sizeof(size_t);
 	free_list->next = old;
 	free_node_t * base = free_list;
+	free_node_t * iter;
 hit_compress:
-	free_node_t * iter = base->next;
+	iter = base->next;
 	while(iter){
 		void * next =(char*)base+base->size;
 		void * iter_next = (char*)iter+iter->size;
@@ -90,14 +91,14 @@ hit_compress:
 void debug_free_list(){
 	free_node_t * current = free_list;
 	while(current){
-		printf("|current: %zu, size:%zu, next:%zu, iter_next:%zu|\n", current, current->size, current->next,(char*)current+current->size);
+		printf("|current: %zu, size:%zu, next:%zu, iter_next:%zu|\n", (size_t)current, current->size, (size_t)current->next,(size_t)((char*)current+current->size));
 		assert(current != current->next);
 		current = current->next;
 	}
 	printf("\n");
 }
 
-size_t debug_alloc_size(void * ptr){
+void debug_alloc_size(void * ptr){
 	printf("%p is %zu bytes\n", ptr, *((size_t*)ptr-1));
 }
 
@@ -105,8 +106,9 @@ int main(void){
 	int count = 0;
 	mem_init();
 	debug_free_list();
+	long ** pointers;
 restart:
-	long ** pointers = mem_alloc(sizeof(long *), 400);
+	pointers = mem_alloc(sizeof(long *), 400);
 	debug_free_list();
 	for(int i =0; i<400; i++){
 		long * ptr = mem_alloc(sizeof(long *), 1);
