@@ -41,6 +41,8 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 typedef __uint128_t u128;
+typedef double f64;
+typedef float f32;
 /*
 Memory stuff
 */
@@ -291,6 +293,19 @@ int execute(const char ** strings);
 int execute_fd(int f_out, int f_in, int f_er, const char ** strings);
 bool write_string_to_file(const char * s, const char * file_name);
 String read_file_to_string(const char * file_name);
+
+/*
+ Noise functionality 
+*/
+typedef struct{
+    i64 v0;
+    i64 v1;
+    i64 v2;
+    double scale_divisor;
+}NoiseOctave2d;
+NoiseOctave2d noise_octave_2d_new(double scale_divisor);
+f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase);
+
 /*
 Implementation
 */
@@ -341,9 +356,9 @@ void*memdup(void * ptr, size_t size){
 Arena stuff
 */
 Arena * create_arena(){
-    char * buffer = (char *)global_alloc(1,4096);
+    char * buffer = (char *)global_alloc(1,4096*8);
     char * next_ptr = buffer;
-    char * end = buffer+4096;
+    char * end = buffer+4096*8;
     char * previous_allocation = 0;
     struct Arena * next = 0;
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
@@ -769,5 +784,60 @@ String read_file_to_string(const char *file_name){
 	fclose(f);
 	out.items[fsize]= 0;
 	return out;
+}
+/*
+ Noise stuff 
+ */
+typedef struct{double x; double y;} float2;
+f64 interpolate(f64 a, f64 b, f64 s){
+    return a*(1-s)+b*s;
+}
+
+NoiseOctave2d noise_octave_2d_new(double scale_divisor){
+        i64 v0 = rand()%1000000000;
+        i64 v1 = rand()%1000000000;
+        i64 v2 = rand()%1000000000;
+        return (NoiseOctave2d){v0,v1,v2,scale_divisor};
+}
+
+float2 random_gradient(NoiseOctave2d * self, i32 x, i32 y) {
+        i64 w = 64;
+        i64 s = w / 2;
+        i64 a = x;
+        i64 b = y;
+        a *= self->v0;
+        b ^= a << s | a >> (w - s);
+        b *= self->v1;
+        a &= b << s | b >> (w - s);
+        a *= self->v2;
+        f64 random = (f64)a * (3.14159265 / (f64)(!(!(u64)0 >> 1)));
+        return (float2){cos(random), sin(random)};
+        //return self.points[y as usize % self.points.len()][x as usize % self.points.len()];
+}
+
+f64 dot_grid_gradient(NoiseOctave2d * self, i32 ix, i32 iy, f64 x, f64 y){
+    float2 gradient = random_gradient(self,ix, iy);
+    f64 dx = x - (f64)ix;
+    f64 dy = y - (f64)iy;
+    return (dx * gradient.x + dy * gradient.y);
+}
+
+f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase){
+    f64 x = xbase / 16.0;
+    f64 y = ybase / 16.0;
+    i32 x0 = floor(x);
+    i32 x1 = x0 + 1;
+    i32 y0 = floor(y);
+    i32 y1 = y0 + 1;
+    f64 sx = (f64)x - (f64)x0;
+    f64 sy = (f64)y- (f64)y0;
+    f64 n00 = dot_grid_gradient(self,x0, y0, x, y);
+    f64 n10 = dot_grid_gradient(self,x1, y0, x, y);
+    f64 ix0 = interpolate(n00, n10, sx);
+    f64 n01 = dot_grid_gradient(self,x0, y1, x, y);
+    f64 n11 = dot_grid_gradient(self,x1, y1, x, y);
+    f64 ix1 = interpolate(n01, n11, sx);
+    f64 value = interpolate(ix0, ix1, sy);
+    return value;
 }
 #endif
