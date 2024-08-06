@@ -1,5 +1,5 @@
-main.c 
-makefile
+./main.c 
+./makefile
 a.out
 a.out.dSYM/
 generator
