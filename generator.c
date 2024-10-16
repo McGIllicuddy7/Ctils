@@ -658,7 +658,6 @@ int main(int argc, const char ** argv){
     String i_head = generate_type_header("int", "i", "sqrt","acos", "%d", max_dimension);
     str_concat(to_write, i_head);
     destroy(i_head);
-
     String code_head = generate_code_header();
     str_concat(to_write, code_head);
     destroy(code_head);
@@ -672,7 +671,6 @@ int main(int argc, const char ** argv){
     String i_code = generate_type_code("int", "i", "ssqrt","acos", "%d", max_dimension);
     str_concat(to_write, i_code);
     destroy(i_code);  
-
     String code_foot = generate_code_footer();
     str_concat(to_write,code_foot);
     destroy(code_foot);

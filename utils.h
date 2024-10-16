@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <stdint.h>
+#include <math.h>
 /*
 	Initial Defines
 */

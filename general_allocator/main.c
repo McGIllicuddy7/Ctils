@@ -3,19 +3,29 @@
 #include <unistd.h>
 #include <assert.h>
 #include <sys/mman.h>
-
+#include <stdbool.h>
+#define false 0
+#define true 1
 typedef struct free_node_t{
 	size_t size;
 	struct free_node_t * next;
 }free_node_t;
+typedef struct{void * ptr; size_t size;}allocation_t;
 static free_node_t* free_list = 0;
-static char bytes[4096] = {0};
+free_node_t * allocate_block(size_t min_size){
+	size_t map_size = 4096;
+	while(map_size<min_size){
+		map_size *= 2;
+	}
+	free_node_t * out = 0;
+	out=  mmap(0, map_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+	out->size = map_size-sizeof(free_node_t);
+	out->next = 0;
+	return out;
+}
 void mem_init(){
-	const size_t map_size = 4096;
 	assert(free_list == 0);
-	free_list = (void *)bytes;
-	free_list->size = map_size-sizeof(free_node_t)+sizeof(size_t);
-	free_list->next = 0;
+	free_list = allocate_block(0);
 }
 
 void * mem_alloc(size_t size, size_t count){
@@ -26,6 +36,7 @@ void * mem_alloc(size_t size, size_t count){
 	}
 	free_node_t * current = free_list;
 	free_node_t * previous = NULL;
+	free_node_t * tmp;
 	while(current){
 		if(current->size>=(requested_size+sizeof(size_t))){
 			void * out = current;	
@@ -41,9 +52,7 @@ void * mem_alloc(size_t size, size_t count){
 				assert(next_pointer == out+requested_size+sizeof(size_t));
 			} else {
 				free_node_t * nxt = current->next;
-				if(nxt == 0){
-					return 0;
-				}
+				goto ret;
 				*(size_t*)out = current->size;
 				if(previous){
 					previous->next = nxt;
@@ -51,13 +60,17 @@ void * mem_alloc(size_t size, size_t count){
 					free_list = nxt;
 				}
 			}
-			return out+sizeof(size_t);
+			return (void*)(((size_t)out+sizeof(size_t)));
 		}else {
 			previous = current;
 			current = current->next;	
 		}
 	}
-	return NULL;
+	ret:
+	tmp = free_list;
+	free_list = allocate_block(requested_size);
+	free_list->next = tmp;
+	return mem_alloc(size,count);
 }
 void debug_free_list();
 
@@ -107,18 +120,20 @@ int main(void){
 	mem_init();
 	debug_free_list();
 	long ** pointers;
+	const int mcount = 1000;
 restart:
-	pointers = mem_alloc(sizeof(long *), 400);
+	pointers = mem_alloc(sizeof(long *), mcount);
 	debug_free_list();
-	for(int i =0; i<400; i++){
+	for(int i =0; i<mcount; i++){
 		long * ptr = mem_alloc(sizeof(long *), 1);
 		assert(ptr);
 		pointers[i] = ptr;
 	}
 	debug_free_list();
-	for(int i =0; i<400; i++){
+	for(int i =0; i<mcount; i++){
 		mem_free(pointers[i]);
 	}
+	debug_free_list();
 	mem_free(pointers);
 	debug_free_list();
 	if(count<0){
