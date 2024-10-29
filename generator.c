@@ -644,7 +644,7 @@ String generate_type_code(const char * type_name, const char * type_alias, const
     return to_write;
 }
 int main(int argc, const char ** argv){
-    const int max_dimension = 11;
+    const int max_dimension = 3;
     String to_write = new_string("");
     String header = generate_pre_header_code();
     str_concat(to_write, header);
@@ -661,7 +661,6 @@ int main(int argc, const char ** argv){
     String code_head = generate_code_header();
     str_concat(to_write, code_head);
     destroy(code_head);
-
     String db_code = generate_type_code("double", "d", "sqrt", "acos", "%lf", max_dimension);
     str_concat(to_write, db_code);
     destroy(db_code);
@@ -674,7 +673,6 @@ int main(int argc, const char ** argv){
     String code_foot = generate_code_footer();
     str_concat(to_write,code_foot);
     destroy(code_foot);
-
     write_string_to_file(to_write, "utils_math.h");
     destroy(to_write);
 }

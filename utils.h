@@ -71,6 +71,7 @@ Slice stuff
 */
 
 void * memdup(void * ptr, size_t size);
+void * arena_memdup(Arena* arena, void * ptr, size_t * size);
 
 #define CreateVecType(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
 
@@ -83,6 +84,7 @@ void * memdup(void * ptr, size_t size);
 #define arena_make_with_capacity(arena, T, cap){arena_alloc(arena,cap*sizeof(T)), 0, cap, arena}
 #define clone(vec) {memdup(vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 
+#define clone_t(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacit}
 #define append(vec, value)\
  {if(vec.capacity<vec.length+1){\
     if (vec.capacity != 0){ vec.items = arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
@@ -352,6 +354,15 @@ void*memdup(void * ptr, size_t size){
         memcpy(out, ptr,size);
         return out;
     }
+}
+void * arena_memdup(Arena* arena, void * ptr, size_t size){
+	if(!ptr){
+		return 0;
+	} else{
+		void * out = arena_alloc(size);
+		memcpy(out, ptr.size);
+		return out;
+	}
 }
 /*
 Arena stuff

@@ -23,5 +23,7 @@ int main(int argc, const char ** argv){
     StringintHashTable_destroy(s);
     free_arena(arena);
     debug_alloc_and_global_free_counts();
+    vector2d a = {10,10};
+    vector2d b = {10,10};
     return 0;
 }
