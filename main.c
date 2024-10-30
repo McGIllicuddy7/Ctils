@@ -1,11 +1,23 @@
 #define CTILS_IMPLEMENTATION
 #include "utils.h"
 #include "utils_math.h"
+#include "lambda.h"
 #include <stdio.h>
-CreateVecType(int);
-CreateVecType(String);
+enable_vec_type(int);
+enable_vec_type(String);
 enable_hash_type(String, int);
-int main(int argc, const char ** argv){
+
+make_lambda_type(void, void);
+make_lambda_capture(fn_void, void, testing123, {printf("%s\n", captures->name);}, {const char * name;});
+make_lambda_type(int_to_int,int, int);
+make_lambda_capture(fn_int_to_int, int, add, {return a+captures->b;}, {int b;}, int a)
+void test(){
+    fn_void a = lambda(testing123, {"hello world\n"});
+    fn_int_to_int b = lambda(add, {10});
+    call(a);
+    printf("%d\n", call(b, 32));
+}   
+void hash_test(){
     Arena * arena = create_arena();
     StringintHashTable * s = StringintHashTable_create(10, HashString, StringEquals);
     StringVec strings = arena_make(arena,String);
@@ -25,5 +37,8 @@ int main(int argc, const char ** argv){
     debug_alloc_and_global_free_counts();
     vector2d a = {10,10};
     vector2d b = {10,10};
+}
+int main(int argc, const char ** argv){
+    test();
     return 0;
 }

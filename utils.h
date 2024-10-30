@@ -71,9 +71,9 @@ Slice stuff
 */
 
 void * memdup(void * ptr, size_t size);
-void * arena_memdup(Arena* arena, void * ptr, size_t * size);
+void * arena_memdup(Arena* arena, void * ptr, size_t size);
 
-#define CreateVecType(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
+#define enable_vec_type(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
 
 #define make(T) {0}
 
@@ -84,7 +84,7 @@ void * arena_memdup(Arena* arena, void * ptr, size_t * size);
 #define arena_make_with_capacity(arena, T, cap){arena_alloc(arena,cap*sizeof(T)), 0, cap, arena}
 #define clone(vec) {memdup(vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 
-#define clone_t(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacit}
+#define clone_into(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacit}
 #define append(vec, value)\
  {if(vec.capacity<vec.length+1){\
     if (vec.capacity != 0){ vec.items = arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
@@ -126,7 +126,6 @@ vec.items = arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(
 /*
 String stuff
 */
-
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
 String new_string_arena(Arena * arena,const char* str);
 String new_string_wide_arena(Arena * arena,const wchar_t* str);
@@ -138,7 +137,6 @@ void _strconcat(String * a, const char* b, size_t b_size);
 String string_format(const char * fmt, ...);
 bool StringEquals(String a, String b);
 String RandomString(int minlen, int maxlen);
-
 #define str_concat(a, b)\
 	_strconcat(&a,(const char *)b, sizeof(b[0]));
 
@@ -166,7 +164,7 @@ typedef struct{\
 	T key;\
 	U value;\
 }T##U##KeyValuePair;\
-CreateVecType(T##U##KeyValuePair);\
+enable_vec_type(T##U##KeyValuePair);\
 typedef struct{\
 	T##U##KeyValuePairVec *Table;\
 	size_t TableSize;\
@@ -359,8 +357,8 @@ void * arena_memdup(Arena* arena, void * ptr, size_t size){
 	if(!ptr){
 		return 0;
 	} else{
-		void * out = arena_alloc(size);
-		memcpy(out, ptr.size);
+		void * out = arena_alloc(arena,size);
+		memcpy(out, ptr, size);
 		return out;
 	}
 }

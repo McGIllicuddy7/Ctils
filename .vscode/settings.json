@@ -28,6 +28,12 @@
         "system_error": "c",
         "text_encoding": "c",
         "__node_handle": "cpp",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "utils.h": "c",
+        "string_utils.h": "c",
+        "complex": "c",
+        "typeinfo": "c",
+        "chrono": "c",
+        "utils_math.h": "c"
     }
 }
