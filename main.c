@@ -11,9 +11,11 @@ make_lambda_type(void, void);
 make_lambda_capture(fn_void, void, testing123, {printf("%s\n", captures->name);}, {const char * name;});
 make_lambda_type(int_to_int,int, int);
 make_lambda_capture(fn_int_to_int, int, add, {return a+captures->b;}, {int b;}, int a)
+make_lambda(fn_int_to_int, int, add12, {return a+12;}, int a)
 void test(){
     fn_void a = lambda(testing123, {"hello world\n"});
     fn_int_to_int b = lambda(add, {10});
+    b = lambda(add12);
     call(a);
     printf("%d\n", call(b, 32));
 }   
