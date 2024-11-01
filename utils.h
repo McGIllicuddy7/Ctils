@@ -31,6 +31,7 @@ void debug_alloc_and_global_free_counts();
 #define str_type char
 #endif
 #define nil 0
+
 typedef unsigned char Byte;
 typedef int8_t i8;
 typedef int16_t i16;

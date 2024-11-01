@@ -1,27 +1,48 @@
 #pragma once
 #include "utils.h"
+#define CTILS_IMPLEMENTATION
+typedef struct {char * items; size_t length;}Str;
+enable_vec_type(Str);
+Str String_to_Str(String s);
+#define STR(st) (Str){(char*)st, strlen(st)}
+#define substring(st, start, end)(Str){st.items+start, end};
+char * Str_to_c_string(Arena * arena, Str s);
+StrVec split_str_by_delim(Arena * arena,Str base, Str delim);
+StrVec split_str_by_delim_no_delims(Arena * arena,Str bases, Str delim);
 
-enable_vec_type(String);
-typedef struct {char * base; size_t len;}Str;
-#define STR(st) _Generic((st), (char *): (Str){st, strlen(st)},(const char *): (Str){(char*)st, strlen(st)}, (String):(Str){st.items, st.length})
-StringVec split_str_by_delim(Arena * arena,Str base, Str delim);
-StringVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim);
-#define PARENS ()
+#ifdef CTILS_IMPLEMENTATION 
+char * Str_to_c_string(Arena * arena, Str s){
+    char * out = arena_alloc(arena, s.length+1);
+    memset(out, 0,s.length+1);
+    memcpy(out, s.items, s.length);
+    return out;
+}
+StrVec split_str_by_delim(Arena * arena,Str base, Str delim){
+    StrVec out = arena_make(arena, Str);
+    int start = 0;
+    for(int i =0; i<base.length; i++){
+        if(base.items[i] == delim.items[0]){
+            int j = 0; 
+            bool matched = 1;
+            while(j<base.length-i &&j<delim.length){
+                if(base.items[i+j] != delim.items[j]){
+                    matched = 0;
+                    break;
+                }
+                j = j+1;
+                if(j>=base.length-i){
+                    matched = 0;
+                }
+            }
+            if(matched){
+                append(out, substring(base, start, i));
+                append(out, substring(base, i, delim.length));
+            }
+        }
+    }
 
-#define EXPAND(...) EXPAND6(EXPAND6(EXPAND6(EXPAND6(__VA_ARGS__))))
-#define EXPAND6(...) EXPAND5(EXPAND5(EXPAND5(EXPAND5(__VA_ARGS__))))
-#define EXPAND5(...) EXPAND4(EXPAND4(EXPAND4(EXPAND4(__VA_ARGS__))))
-#define EXPAND4(...) EXPAND3(EXPAND3(EXPAND3(EXPAND3(__VA_ARGS__))))
-#define EXPAND3(...) EXPAND2(EXPAND2(EXPAND2(EXPAND2(__VA_ARGS__))))
-#define EXPAND2(...) EXPAND1(EXPAND1(EXPAND1(EXPAND1(__VA_ARGS__))))
-#define EXPAND1(...) __VA_ARGS__
+}
+StrVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim){
 
-#define FOR_EACH(macro, ...)                                    \
-  __VA_OPT__(EXPAND(FOR_EACH_HELPER(macro, __VA_ARGS__)))
-#define FOR_EACH_HELPER(macro, a1, ...)                         \
-  macro(a1)                                                     \
-  __VA_OPT__(FOR_EACH_AGAIN PARENS (macro, __VA_ARGS__))
-#define FOR_EACH_AGAIN() FOR_EACH_HELPER
-#define ARGS_FIRST(arg,...) arg
-#define ARGS_REMAINDER(arg,...) __VAL_OPT(__VA_ARGS__)
-#define print(args...) {printf(ARGS_FIRST(args));}
+}
+#endif
