@@ -21,6 +21,7 @@ fn_int box(int i){
     return lambda(boxed, {i});
 }
 void test(){
+    printf("<3");
     Arena * local =create_arena();
     Str s = STR("hello world\n");
     StrVec strs = split_str_by_delim(local, s, STR(" "));

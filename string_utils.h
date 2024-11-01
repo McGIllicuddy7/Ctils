@@ -5,7 +5,7 @@ typedef struct {char * items; size_t length;}Str;
 enable_vec_type(Str);
 Str String_to_Str(String s);
 #define STR(st) (Str){(char*)st, strlen(st)}
-#define substring(st, start, end)(Str){st.items+start, end};
+#define substring(st, start, end)(Str){st.items+start, end+1};
 char * Str_to_c_string(Arena * arena, Str s);
 StrVec split_str_by_delim(Arena * arena,Str base, Str delim);
 StrVec split_str_by_delim_no_delims(Arena * arena,Str bases, Str delim);
@@ -17,6 +17,7 @@ char * Str_to_c_string(Arena * arena, Str s){
     memcpy(out, s.items, s.length);
     return out;
 }
+
 StrVec split_str_by_delim(Arena * arena,Str base, Str delim){
     StrVec out = arena_make(arena, Str);
     int start = 0;
@@ -37,10 +38,12 @@ StrVec split_str_by_delim(Arena * arena,Str base, Str delim){
             if(matched){
                 append(out, substring(base, start, i));
                 append(out, substring(base, i, delim.length));
+                start = i;
+                i += delim.length;
             }
         }
     }
-
+    return out;
 }
 StrVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim){
 
