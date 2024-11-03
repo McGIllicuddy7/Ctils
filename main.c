@@ -21,21 +21,20 @@ fn_int box(int i){
     return lambda(boxed, {i});
 }
 void test(){
-    printf("<3");
     Arena * local =create_arena();
-    Str s = STR("hello world\n");
-    StrVec strs = split_str_by_delim(local, s, STR(" "));
+    Str s = STR("hello world");
+    StrVec strs = split_str_by_delim_no_delims(local, s, STR(" "));
     for(int i =0; i<strs.length; i++){
-        printf("%s\n",Str_to_c_string(local, strs.items[i]));
+        printf("<%s>\n",Str_to_c_string(local, strs.items[i]));
     }
     free_arena(local);
 }   
 void hash_test(){
     Arena * arena = create_arena();
     StringintHashTable * s = StringintHashTable_create(10, HashString, StringEquals);
-    StringVec strings = arena_make(arena,String);
+    StringVec strings = make(arena,String);
     for(int i =0; i<1000; i++){
-        String tmp = RandomStringArena(arena,10, 20);
+        String tmp = RandomString(arena,10, 20);
         append(strings, tmp);
         StringintHashTable_insert(s, tmp, i);
     }

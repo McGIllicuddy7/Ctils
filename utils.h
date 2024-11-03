@@ -31,7 +31,6 @@ void debug_alloc_and_global_free_counts();
 #define str_type char
 #endif
 #define nil 0
-
 typedef unsigned char Byte;
 typedef int8_t i8;
 typedef int16_t i16;
@@ -71,21 +70,16 @@ void arena_reset(Arena * arena);
 Slice stuff
 */
 
-void * memdup(void * ptr, size_t size);
-void * arena_memdup(Arena* arena, void * ptr, size_t size);
+void * memdup(Arena * arena,void * ptr, size_t size);
 
 #define enable_vec_type(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
 
-#define make(T) {0}
 
-#define make_with_capacity(T,cap) {global_alloc(cap,sizeof(T)), 0, cap, 0}
 
-#define arena_make(arena, T) {0,0,0, arena}
+#define make(arena, T) {0,0,0, arena}
 
-#define arena_make_with_capacity(arena, T, cap){arena_alloc(arena,cap*sizeof(T)), 0, cap, arena}
-#define clone(vec) {memdup(vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
-
-#define clone_into(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacit}
+#define make_with_capacity(arena, T, cap){arena_alloc(arena,cap*sizeof(T)), 0, cap, arena}
+#define clone(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 #define append(vec, value)\
  {if(vec.capacity<vec.length+1){\
     if (vec.capacity != 0){ vec.items = arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
@@ -128,16 +122,12 @@ vec.items = arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(
 String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
-String new_string_arena(Arena * arena,const char* str);
-String new_string_wide_arena(Arena * arena,const wchar_t* str);
-String string_format_arena(Arena * arena, const char * fmt, ...);
-String RandomStringArena(Arena * arena, int minlen, int maxlen);
-String new_string(const char* str);
-String new_string_wide(const wchar_t* str);
+String new_string(Arena * arena,const char* str);
+String new_string_wide(Arena * arena,const wchar_t* str);
+String string_format(Arena * arena, const char * fmt, ...);
+String RandomStrina(Arena * arena, int minlen, int maxlen);
 void _strconcat(String * a, const char* b, size_t b_size);
-String string_format(const char * fmt, ...);
 bool StringEquals(String a, String b);
-String RandomString(int minlen, int maxlen);
 #define str_concat(a, b)\
 	_strconcat(&a,(const char *)b, sizeof(b[0]));
 
@@ -179,14 +169,14 @@ static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(
 	out->hash_func = hash_func;\
 	out->eq_func = eq_func;\
 	for(int i =0; i<size; i++){\
-		out->Table[i] = (T##U##KeyValuePairVec)make_with_capacity(T##U##KeyValuePair,16);\
+		out->Table[i] = (T##U##KeyValuePairVec)make_with_capacity(0,T##U##KeyValuePair,16);\
 	}\
 	return out;\
 }\
 static void T##U##HashTable_resize(T##U##HashTable * table, size_t new_size){\
 	T##U##KeyValuePairVec* new_table = global_alloc(8,new_size);\
 	for(int i =0; i<new_size; i++){\
-		new_table[i] = (T##U##KeyValuePairVec)make_with_capacity(T##U##KeyValuePair,8);\
+		new_table[i] = (T##U##KeyValuePairVec)make_with_capacity(0,T##U##KeyValuePair,8);\
 	}\
 	for(int i =0; i<table->TableSize; i++){\
 		for(int j = 0; j<len(table->Table[i]); j++){\
@@ -294,7 +284,7 @@ void end_profile_print(const char * message);
 int execute(const char ** strings);
 int execute_fd(int f_out, int f_in, int f_er, const char ** strings);
 bool write_string_to_file(const char * s, const char * file_name);
-String read_file_to_string(const char * file_name);
+String read_file_to_string(Arena * arena,const char * file_name);
 
 /*
  Noise functionality 
@@ -345,16 +335,7 @@ void mem_shift(void * start, size_t size, size_t count, size_t distance){
 		}
 	}
 }
-void*memdup(void * ptr, size_t size){
-    if (!ptr){
-        return 0;
-    } else{
-        void * out = global_alloc(size,1);
-        memcpy(out, ptr,size);
-        return out;
-    }
-}
-void * arena_memdup(Arena* arena, void * ptr, size_t size){
+void * memdup(Arena* arena, void * ptr, size_t size){
 	if(!ptr){
 		return 0;
 	} else{
@@ -548,91 +529,19 @@ int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
 String Stuff
 */
 #include <stdarg.h>
-String new_string(const char* str){
-	return new_string_arena(0, str);
-}
-String new_string_wide(const wchar_t* str){
-	return new_string_wide_arena(0, str);
-}
-String string_format(const char * fmt, ...){
-	String s =new_string("");
-	va_list args;
-	va_start(args, fmt);
-	int l = strlen(fmt);
-	for(int i = 0; i<l; i++){
-		if(fmt[i] != '%'){
-			str_append(s, fmt[i]);
-		}
-		else{
-			if(fmt[i+1] == 'c'){
-				char buff[2];
-				buff[0] = (char)(va_arg(args,int));
-				buff[1] = '\0';
-				str_concat(s, buff);
-				i++;
-			}
-			if(fmt[i+1] == 'l' && fmt[i+2] == 'u'){
-				char buff[128];
-				snprintf(buff,127, "%lu", va_arg(args,unsigned long));
-				str_concat(s,buff);
-				i+= 2;
-			}
-			if(fmt[i+1] == 'u'){		
-				char buff[128];
-				snprintf(buff,127, "%u", va_arg(args,unsigned int));
-				str_concat(s,buff);
-				i+= 1;
-			}
-			if(fmt[i+1] == 'l' && fmt[i+2] == 'd'){
-				char buff[128];
-				snprintf(buff,127, "%ld", va_arg(args,long));
-				str_concat(s,buff);
-				i+= 2;
-			}
-			if(fmt[i+1] == 'l' && fmt[i+2] == 's'){
-				str_concat(s,va_arg(args, wchar_t *));
-				i+= 2;
-			}
-			else if(fmt[i+1] == 's'){
-				char * s2 =  va_arg(args,char *);
-				str_concat(s, s2);
-				i++;
-			}
-			else if(fmt[i+1] == 'f'){
-				char buff[128];
-				snprintf(buff,127,"%f", va_arg(args,double));
-				str_concat(s,buff);
-				i++;
-			}
-			else if(fmt[i+1] == 'd'){
-				char buff[128];
-				snprintf(buff,127,"%d", va_arg(args,int));
-				str_concat(s,buff);
-				i++;
-			}
-			else if(fmt[i+1] == '%'){
-				append(s, '%');
-				i++;
-			}
-		}
-	}
-	va_end(args);
-	return s;
-}
 bool StringEquals(String a, String b);
-String RandomString(int minlen, int maxlen);
-String new_string_arena(Arena * arena,const char* str){
+String new_string(Arena * arena,const char* str){
 	int l = strlen(str)+1;
-    String out = arena_make_with_capacity(arena,str_type,l);
+    String out = make_with_capacity(arena,str_type,l);
 	for(int i = 0; i<l; i++){
 		append(out, (str_type)str[i]);
 	}
 	append(out, '\0');
 	return out;
 }
-String new_string_wide_arena(Arena * arena,const wchar_t* str){
+String new_string_wide(Arena * arena,const wchar_t* str){
     int l = wcslen(str);
-	String out = arena_make_with_capacity(arena,str_type, l);
+	String out = make_with_capacity(arena,str_type, l);
 	for(int i = 0; i<l; i++){
 		append(out, (str_type)str[i]);
 	}
@@ -671,8 +580,8 @@ void _strconcat(String * a, const char* b, size_t b_size){
 		}
 	}
 }
-String string_format_arena(Arena *arena,const char * fmt, ...){
-	String s =new_string_arena(arena,"");
+String string_format(Arena *arena,const char * fmt, ...){
+	String s =new_string(arena,"");
 	va_list args;
 	va_start(args, fmt);
 	int l = strlen(fmt);
@@ -747,9 +656,9 @@ bool StringEquals(String a, String b){
 	}
 	return 1;
 }
-String RandomStringArena(Arena * arena,int minlen, int maxlen){
+String RandomString(Arena * arena,int minlen, int maxlen){
 	int length = rand()%(maxlen-minlen)+minlen;
-	String out = arena_make_with_capacity(arena,str_type, length+1);
+	String out = make_with_capacity(arena,str_type, length+1);
 	for(int i= 0; i<length+1; i++){
 		out.items[i] = 0;
 	}
@@ -764,9 +673,7 @@ String RandomStringArena(Arena * arena,int minlen, int maxlen){
 	out.items[length+1] = 0;
 	return out;
 }
-String RandomString(int min_len, int maxlen){
-	return RandomStringArena(0, min_len, maxlen);
-}
+
 /*
 IO FUNCTIONALITY
 */
@@ -780,7 +687,7 @@ bool write_string_to_file(const char * s, const char * file_name){
 	fclose(f);
 	return size == w_size;
 }
-String read_file_to_string(const char *file_name){
+String read_file_to_string(Arena * arena, const char *file_name){
 	FILE *f= fopen(file_name, "rb");
 	if (!f){
 		perror("ERROR:");
@@ -789,7 +696,7 @@ String read_file_to_string(const char *file_name){
 	fseek(f, 0, SEEK_END);
 	size_t fsize = ftell(f);
 	fseek(f, 0, SEEK_SET); 
-	String out = new_string("");
+	String out = new_string(arena,"");
 	resize(out, fsize+1);
 	fread(out.items, 1, fsize, f);
 	fclose(f);
