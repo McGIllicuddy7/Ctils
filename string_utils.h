@@ -10,9 +10,19 @@ char * Str_to_c_string(Arena * arena, Str s);
 StrVec split_str_by_delim(Arena * arena,Str base, Str delim);
 StrVec split_str_by_delim_no_delims(Arena * arena,Str bases, Str delim);
 bool StrEquals(Str a, Str b);
-StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count);
 int StrlenCmp(const void* a, const void* b);
 int StrlenCmpReversed(const void* a, const void* b);
+
+typedef struct{
+    Str str;
+    Str file_name;
+    u32 line;
+    u8 start_col;
+}Token;
+enable_vec_type(Token);
+StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count);
+TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, Str file);
+
 #ifdef CTILS_IMPLEMENTATION 
 bool StrEquals(Str a, Str b){
     if(a.length != b.length){
@@ -173,6 +183,67 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
     StrVec out = make_with_capacity(arena, Str, tokens.length);
     for(int i =0; i<tokens.length; i++){
         append(out, tokens.items[i].str);
+    }
+    free_arena(local);
+    return out;
+}
+TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, Str file_name){
+    Arena * local = create_arena();
+    CTILS_InternalTokenVec tokens = make(local, CTILS_InternalToken);
+    StrVec in_delims = make_with_capacity(local, Str, delims_count);
+    for(int i =0; i<delims_count; i++){
+        append(in_delims, delimns[i]);
+    }
+    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (* _Nonnull )(const void *, const void * ))StrlenCmpReversed);
+    StrVec s = split_str_by_delim(local, base, STR("\n"));
+    int indx = 0;
+    int lines=0;
+    for(int i =0; i<s.length; i++){
+        if(!StrEquals(s.items[i], STR("\n"))){
+            CTILS_InternalToken tok = {};
+            tok.str = s.items[i];
+            tok.start_col = 0;
+            tok.line = lines;
+            append(tokens, tok);
+        } else{
+            lines ++;
+        }
+    }
+    for(int i =0; i<in_delims.length; i++){
+        Arena * temps = create_arena();
+        CTILS_InternalTokenVec tmp = make(temps, CTILS_InternalToken);
+        for(int j =0; j<tokens.length; j++){
+            if(tokens.items[j].finalized){
+                append(tmp, tokens.items[j]);
+                continue;
+            }
+            StrVec strs = split_str_by_delim(temps,tokens.items[j].str, in_delims.items[i]);
+            int offset =tokens.items[j].start_col;
+            for(int k= 0; k<strs.length; k++){
+                CTILS_InternalToken tok;
+                tok.line = tokens.items[j].line;
+                tok.start_col = offset;
+                tok.finalized = StrEquals(strs.items[k], in_delims.items[i]);
+                tok.str = strs.items[k];
+                offset += tok.str.length;
+                append(tmp, tok);
+            }
+        }
+        resize(tokens, 0);
+        for(int j =0; j<tmp.length; j++){
+            append(tokens, tmp.items[j]);
+        }
+        free_arena(temps);
+    }
+    TokenVec out = make_with_capacity(arena, Token, tokens.length);
+    for(int i =0; i<tokens.length; i++){
+        CTILS_InternalToken s = tokens.items[i];
+        Token tok = {};
+        tok.file_name = file_name;
+        tok.line = s.line;
+        tok.start_col = s.start_col;
+        tok.str = s.str;
+        append(out, tok);
     }
     free_arena(local);
     return out;

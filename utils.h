@@ -44,6 +44,10 @@ typedef uint64_t u64;
 typedef __uint128_t u128;
 typedef double f64;
 typedef float f32;
+#ifdef __cplusplus
+#include <type_traits>
+#define typeof(T) std::decltype(T)
+#endif
 /*
 Memory stuff
 */
@@ -78,7 +82,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 
 #define make(arena, T) {0,0,0, arena}
 
-#define make_with_capacity(arena, T, cap){arena_alloc(arena,cap*sizeof(T)), 0, cap, arena}
+#define make_with_capacity(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)cap, arena}
 #define clone(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 #define append(vec, value)\
  {if(vec.capacity<vec.length+1){\
@@ -114,7 +118,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 vec.length= len;\
 size_t previous_cap = vec.capacity;\
 while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
-vec.items = arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
+vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 
 #define len(vec) (vec).length
 /*
