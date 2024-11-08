@@ -22,10 +22,10 @@ fn_int box(int i){
 }
 void test(){
     Arena * local =create_arena();
-    Str s = STR("hello world");
-    StrVec strs = split_str_by_delim_no_delims(local, s, STR(" "));
-    for(int i =0; i<strs.length; i++){
-        printf("<%s>\n",Str_to_c_string(local, strs.items[i]));
+    Str delimns[] = {STR("+"), STR("/"), STR("->")};
+    StrVec dels = tokenize_str_no_info(local, STR("a+b/c->d"), delimns, sizeof(delimns)/sizeof(Str));
+    for(int i =0; i<dels.length; i++){
+        put_str_ln(dels.items[i]);
     }
     free_arena(local);
 }   

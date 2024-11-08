@@ -82,8 +82,8 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 #define clone(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 #define append(vec, value)\
  {if(vec.capacity<vec.length+1){\
-    if (vec.capacity != 0){ vec.items = arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
-     else{vec.capacity = 1;vec.items = arena_realloc(vec.arena, vec.items, 0, 1*sizeof(vec.items[0]));}\
+    if (vec.capacity != 0){ vec.items =(typeof(vec.items))arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
+     else{vec.capacity = 1;vec.items = (typeof(vec.items))arena_realloc(vec.arena, vec.items, 0, 1*sizeof(vec.items[0]));}\
     } \
     vec.items[vec.length++] = value;}
 
@@ -117,7 +117,6 @@ while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{v
 vec.items = arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 
 #define len(vec) (vec).length
-
 /*
 String stuff
 */
