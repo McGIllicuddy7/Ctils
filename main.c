@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "string_utils.h"
 #include <stdio.h>
+#include "set.h"
 enable_vec_type(int);
 enable_vec_type(String);
 enable_hash_type(String, int);

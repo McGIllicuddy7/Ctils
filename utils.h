@@ -288,7 +288,7 @@ int execute(const char ** strings);
 int execute_fd(int f_out, int f_in, int f_er, const char ** strings);
 bool write_string_to_file(const char * s, const char * file_name);
 String read_file_to_string(Arena * arena,const char * file_name);
-
+bool is_number(char a);
 /*
  Noise functionality 
 */
@@ -705,6 +705,9 @@ String read_file_to_string(Arena * arena, const char *file_name){
 	fclose(f);
 	out.items[fsize]= 0;
 	return out;
+}
+bool is_number(char a){
+	return a == '0' || a == '1' || a == '2' || a == '3' || a == '4' || a == '5' || a == '6' || a == '7' || a == '8' || a == '9';
 }
 /*
  Noise stuff 

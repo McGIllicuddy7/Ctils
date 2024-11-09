@@ -22,6 +22,7 @@ typedef struct{
 enable_vec_type(Token);
 StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count);
 TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, Str file);
+bool is_numbers(Str str);
 
 #ifdef CTILS_IMPLEMENTATION 
 bool StrEquals(Str a, Str b){
@@ -248,4 +249,22 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
     free_arena(local);
     return out;
 }
+bool is_numbers(Str str){
+    bool hit_point = false;
+    for(int i= 0; i<str.length; i++){
+        if(!is_number(str.items[i])){
+            if(!hit_point){
+                if(str.items[i] == '.'){
+                    hit_point = true;
+                } else{
+                    return false;
+                }
+            } else{
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 #endif
