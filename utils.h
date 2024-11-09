@@ -46,7 +46,7 @@ typedef double f64;
 typedef float f32;
 #ifdef __cplusplus
 #include <type_traits>
-#define typeof(T) std::decltype(T)
+#define typeof(T) decltype(T)
 #endif
 /*
 Memory stuff
@@ -84,14 +84,14 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 
 #define make_with_capacity(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)cap, arena}
 #define clone(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
-#define append(vec, value)\
+#define append_v(vec, value)\
  {if(vec.capacity<vec.length+1){\
     if (vec.capacity != 0){ vec.items =(typeof(vec.items))arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
      else{vec.capacity = 1;vec.items = (typeof(vec.items))arena_realloc(vec.arena, vec.items, 0, 1*sizeof(vec.items[0]));}\
     } \
     vec.items[vec.length++] = value;}
 
-#define destroy(vec) arena_free((vec).arena,(vec).items); (vec) = (typeof(vec)){0,0,0,0};
+#define unmake(vec) arena_free((vec).arena,(vec).items); 
 
 #define append_slice(vec, other_items, other_len)\
  {if(vec.capacity<vec.length+other_len){\
@@ -101,7 +101,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
     memcpy(&vec.items[vec.length], other_items, sizeof(vec.items[0])*other_len);\
     vec.length += other_len; } 
 
-#define remove(vec, idx)\
+#define remove_at(vec, idx)\
  if (idx < vec.length&& idx>0){\
     memmove(&vec.items[idx-1], &vec.items[idx], (vec.length-idx-1)*sizeof(vec.items[0])); vec.length--;\
     } else if (vec.length == idx){\
@@ -110,11 +110,11 @@ void * memdup(Arena * arena,void * ptr, size_t size);
         assert(idx>=0 &&idx <vec.length);\
     }
 
-#define insert(vec, idx, item)\
+#define insert_at(vec, idx, item)\
     assert(idx<vec.length+1 && idx>=0);\
     if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
     memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
-#define resize(vec, len){\
+#define resize_vec(vec, len){\
 vec.length= len;\
 size_t previous_cap = vec.capacity;\
 while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
@@ -134,8 +134,8 @@ bool StringEquals(String a, String b);
 #define str_concat(a, b)\
 	_strconcat(&a,(const char *)b, sizeof(b[0]));
 
-#define str_append(a,b)\
-	resize(a, len(a)+1);\
+#define str_append_v(a,b)\
+	resize_vec(a, len(a)+1);\
 	a.items[len(a)-3] = b;\
 	a.items[len(a)-2] = '\0'\
 
@@ -166,8 +166,8 @@ typedef struct{\
 	bool (*eq_func)(T,T);\
 }T##U##HashTable;\
 static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(T),bool (*eq_func)(T,T)){\
-	T##U##HashTable * out = global_alloc(1, sizeof(T##U##HashTable));\
-	out->Table= global_alloc(1,sizeof(T##U##KeyValuePairVec)*size);\
+	T##U##HashTable * out = (T##U##HashTable *)global_alloc(1, sizeof(T##U##HashTable));\
+	out->Table= (T##U##KeyValuePairVec *)global_alloc(1,sizeof(T##U##KeyValuePairVec)*size);\
 	out->TableSize = size;\
 	out->hash_func = hash_func;\
 	out->eq_func = eq_func;\
@@ -176,8 +176,8 @@ static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(
 	}\
 	return out;\
 }\
-static void T##U##HashTable_resize(T##U##HashTable * table, size_t new_size){\
-	T##U##KeyValuePairVec* new_table = global_alloc(8,new_size);\
+static void T##U##HashTable_resize_vec(T##U##HashTable * table, size_t new_size){\
+	T##U##KeyValuePairVec* new_table = (T##U##KeyValuePairVec *)global_alloc(8,new_size);\
 	for(int i =0; i<new_size; i++){\
 		new_table[i] = (T##U##KeyValuePairVec)make_with_capacity(0,T##U##KeyValuePair,8);\
 	}\
@@ -186,7 +186,7 @@ static void T##U##HashTable_resize(T##U##HashTable * table, size_t new_size){\
 			size_t hashval = table->hash_func(table->Table[i].items[j].key);\
 			size_t hash = hashval%new_size;\
 			T##U##KeyValuePair pair = {.key = table->Table[i].items[j].key, .value = table->Table[i].items[j].value};\
-			append(new_table[hash], pair);\
+			append_v(new_table[hash], pair);\
 		}\
 	}\
 	T##U##KeyValuePairVec * old = table->Table;\
@@ -194,7 +194,7 @@ static void T##U##HashTable_resize(T##U##HashTable * table, size_t new_size){\
 	table->Table = new_table;\
 	table->TableSize = new_size;\
 	for(int i =0; i<old_len; i++){\
-		destroy(old[i]);\
+		unmake(old[i]);\
 	}\
     global_free(old);\
 }\
@@ -235,7 +235,7 @@ static void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
     if (idx>-1){\
         table->Table[hash].items[idx].value = value; \
     } else{\
-	    append(tmp, pair);\
+	    append_v(tmp, pair);\
         table->Table[hash] = tmp;\
     }\
 }\
@@ -263,12 +263,12 @@ static void T##U##HashTable_remove(T##U##HashTable * table, T key){\
         }\
     }\
     if(idx>=0){\
-        remove(table->Table[hash], idx);\
+        remove_at(table->Table[hash], idx);\
     }\
 }\
-static void T##U##HashTable_destroy(T##U##HashTable * table){\
+static void T##U##HashTable_unmake(T##U##HashTable * table){\
 	for(int i =0; i<table->TableSize; i++){\
-		destroy(table->Table[i]);\
+		unmake(table->Table[i]);\
 	}\
 	global_free(table->Table);\
 	global_free(table);\
@@ -537,25 +537,25 @@ String new_string(Arena * arena,const char* str){
 	int l = strlen(str)+1;
     String out = make_with_capacity(arena,str_type,l);
 	for(int i = 0; i<l; i++){
-		append(out, (str_type)str[i]);
+		append_v(out, (str_type)str[i]);
 	}
-	append(out, '\0');
+	append_v(out, '\0');
 	return out;
 }
 String new_string_wide(Arena * arena,const wchar_t* str){
     int l = wcslen(str);
 	String out = make_with_capacity(arena,str_type, l);
 	for(int i = 0; i<l; i++){
-		append(out, (str_type)str[i]);
+		append_v(out, (str_type)str[i]);
 	}
-	append(out, '\0');
+	append_v(out, '\0');
 	return out;
 }
 void _strconcat(String * a, const char* b, size_t b_size){
 	if(sizeof(str_type) == 1){
         int l = (*a).length-2;
         int l2 = strlen(b);
-		resize((*a), (*a).length+l2);
+		resize_vec((*a), (*a).length+l2);
 		for(int i=0; i<l2; i++){
 			(*a).items[l+i] = (str_type)(b[i]);
 		}
@@ -564,7 +564,7 @@ void _strconcat(String * a, const char* b, size_t b_size){
 	else{
 		if(b_size <4){
 			int l = len(*a)-1;
-			resize((*a), len((*a))+strlen(b));
+			resize_vec((*a), len((*a))+strlen(b));
 			int l2 = strlen(b);
 			for(int i=0; i<strlen(b); i++){
 				(*a).items[l+i] = (str_type)(b[i]);
@@ -573,7 +573,7 @@ void _strconcat(String * a, const char* b, size_t b_size){
 		}
 		else {
 			int l = len(*a)-1;
-			resize((*a), len((*a))+wcslen((const wchar_t *)b));
+			resize_vec((*a), len((*a))+wcslen((const wchar_t *)b));
 			const wchar_t * v = (const wchar_t *)b;
 			int l2 = wcslen(v);
 			for(int i=0; i<l2; i++){
@@ -590,7 +590,7 @@ String string_format(Arena *arena,const char * fmt, ...){
 	int l = strlen(fmt);
 	for(int i = 0; i<l; i++){
 		if(fmt[i] != '%'){
-			str_append(s, fmt[i]);
+			str_append_v(s, fmt[i]);
 		}
 		else{
 			if(fmt[i+1] == 'c'){
@@ -640,7 +640,7 @@ String string_format(Arena *arena,const char * fmt, ...){
 				i++;
 			}
 			else if(fmt[i+1] == '%'){
-				append(s, '%');
+				append_v(s, '%');
 				i++;
 			}
 		}
@@ -665,7 +665,7 @@ String RandomString(Arena * arena,int minlen, int maxlen){
 	for(int i= 0; i<length+1; i++){
 		out.items[i] = 0;
 	}
-    resize(out, length+3);
+    resize_vec(out, length+3);
 	for(int i =0; i<length; i++){
 		char c = rand()%(90-65)+65;
 		if(rand()%2){
@@ -700,7 +700,7 @@ String read_file_to_string(Arena * arena, const char *file_name){
 	size_t fsize = ftell(f);
 	fseek(f, 0, SEEK_SET); 
 	String out = new_string(arena,"");
-	resize(out, fsize+1);
+	resize_vec(out, fsize+1);
 	fread(out.items, 1, fsize, f);
 	fclose(f);
 	out.items[fsize]= 0;

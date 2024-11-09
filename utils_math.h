@@ -1,8 +1,9 @@
 #pragma once
-#include "utils.h"
 #include <math.h>
 #include <complex.h>
 #include <stdio.h>
+#include "utils.h"
+
 //use #define UTILS_MATH_IMPLEMENTATION to compile
 
 
