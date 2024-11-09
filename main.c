@@ -35,7 +35,7 @@ void hash_test(){
     StringVec strings = make(arena,String);
     for(int i =0; i<1000; i++){
         String tmp = RandomString(arena,10, 20);
-        append_v(strings, tmp);
+        v_append(strings, tmp);
         StringintHashTable_insert(s, tmp, i);
     }
     for(int i =0; i<len(strings); i++){
