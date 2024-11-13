@@ -64,8 +64,8 @@ typedef struct Arena{
     char* previous_allocation;
     struct Arena * next;
 } Arena;
-Arena * create_arena();
-void free_arena(Arena * arena);
+Arena * arena_init();
+void arena_destroy(Arena * arena);
 void * arena_alloc(Arena * arena, size_t size);
 void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size);
 void arena_free(Arena * arena, void * ptr);
@@ -350,7 +350,7 @@ void * memdup(Arena* arena, void * ptr, size_t size){
 /*
 Arena stuff
 */
-Arena * create_arena(){
+Arena * arena_init(){
     char * buffer = (char *)global_alloc(1,4096*8);
     char * next_ptr = buffer;
     char * end = buffer+4096*8;
@@ -360,7 +360,7 @@ Arena * create_arena(){
     *out = (Arena){buffer, next_ptr, end, previous_allocation, next};
     return out;
 }
-Arena * create_arena_sized(size_t reqsize){
+Arena * arena_init_sized(size_t reqsize){
     size_t size = 4096;
     while(size<=reqsize){
         size *= 2;
@@ -374,12 +374,12 @@ Arena * create_arena_sized(size_t reqsize){
     *out = (Arena){buffer, next_ptr, end, previous_allocation, next};
     return out;
 }
-void free_arena(Arena * arena){
+void arena_destroy(Arena * arena){
     if (arena == 0){
         return;
     }
     global_free(arena->buffer);
-    free_arena(arena->next);
+    arena_destroy(arena->next);
     global_free(arena);
 }
 void * arena_alloc(Arena * arena, size_t size){
@@ -390,7 +390,7 @@ void * arena_alloc(Arena * arena, size_t size){
     char * previous = arena->next_ptr;
     if(previous + act_sz>arena->end){
         if (!arena->next){
-            arena->next = create_arena_sized(size);
+            arena->next = arena_init_sized(size);
         }
         if (arena->next){
             return arena_alloc(arena->next, size);
@@ -415,7 +415,7 @@ void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new
     return out;
 }
 void arena_reset(Arena * arena){
-    free_arena(arena->next);
+    arena_destroy(arena->next);
     arena->next_ptr= arena->buffer;
     arena->previous_allocation = 0;
 }
