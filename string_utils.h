@@ -315,7 +315,14 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
 }
 bool is_numbers(Str str){
     bool hit_point = false;
-    for(int i= 0; i<str.length; i++){
+    if(str.length <1){
+        return false;
+    }
+    int start = 0;
+    if(str.items[0] == '-'){
+        start = 1;
+    }
+    for(int i= start; i<str.length; i++){
         if(!is_number(str.items[i]) && !(str.items[i] == '-')){
             if(!hit_point){
                 if(str.items[i] == '.'){

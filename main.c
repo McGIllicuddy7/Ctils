@@ -11,19 +11,18 @@ enable_vec_type(String);
 enable_hash_type(String, int);
 
 make_lambda_type(void, void);
-make_lambda_capture(fn_void, void, testing123, {printf("%s\n", captures->name);}, {const char * name;});
+make_lambda(fn_void, void, testing123, {printf("hello world\n");});
 make_lambda_type(int_to_int,int, int);
 make_lambda_capture(fn_int_to_int, int, add, {return a+captures->b;}, {int b;}, int a)
 make_lambda(fn_int_to_int, int, add12, {return a+12;}, int a)
 
 make_lambda_type(int, int);
-make_lambda_capture(fn_int, int, boxed, {return captures->i;}, {int i;});
-fn_int box(int i){
-    return lambda(boxed, {i});
-}
+
 void test(){
+    fn_void test = lambda(testing123);
+    call(test);
     Arena * local =arena_create();
-    Str delimns[] = {STR("+"), STR("/"), STR("->")};
+    Str delimns[] = {STR("+"), STR("-"), STR("*"),STR("/"),STR("<"), STR(">"), STR("#"), STR("->"), STR("("), STR(")"),STR("()") ,STR(","), STR("{"), STR("}"), STR(";")};
     StrVec dels = tokenize_str_no_info(local, String_to_Str(read_file_to_string(local, "main.c")), delimns, sizeof(delimns)/sizeof(Str));
     for(int i =0; i<dels.length; i++){
         put_str_ln(dels.items[i]);

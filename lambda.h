@@ -1,5 +1,5 @@
 #include "utils.h"
-#define make_lambda_type(name,return_type, ...) typedef struct{return_type (*fn)(const void * __VA_OPT__(,__VA_ARGS__)); void * data;}fn_##name;
+#define make_lambda_type(name,return_type, ...) typedef struct{union {return_type (*fn)(const void * __VA_OPT__(,__VA_ARGS__));return_type (*fn_no_args)(__VA_ARGS__); };void * data;}fn_##name;
 #define make_lambda_capture(lambda_type,return_type,name, body,fn_captures,...) \
     struct name##Captures fn_captures;\
     return_type name(const struct name##Captures * captures __VA_OPT__(,__VA_ARGS__)) body\
@@ -25,5 +25,5 @@
 
 #define lambda(name, ...) make##name##fn(__VA_OPT__((struct name##Captures)__VA_ARGS__))
 #define lambda_arena(name, arena,...) make##name##fn_arena(arena,__VA_OPT__(,__VA_ARGS__))
-#define call(func,...) func.fn(func.data __VA_OPT__(__VA_ARGS__)))
+#define call(func,...) func.data? func.fn(func.data __VA_OPT__(,__VA_ARGS__)) :func.fn_no_args(__VA_ARGS__)
 
