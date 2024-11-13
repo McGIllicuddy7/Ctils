@@ -149,7 +149,7 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
     for(int i =0; i<delims_count; i++){
         v_append(in_delims, delims[i]);
     }
-    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (* _Nonnull )(const void *, const void * ))StrlenCmpReversed);
+    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (*)(const void *, const void * ))StrlenCmpReversed);
     StrVec s = split_str_by_delim(local, base, STR("\n"));
     int indx = 0;
     int lines=1;
@@ -242,7 +242,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
     for(int i =0; i<delims_count; i++){
         v_append(in_delims, delimns[i]);
     }
-    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (* _Nonnull )(const void *, const void * ))StrlenCmpReversed);
+    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (*)(const void *, const void * ))StrlenCmpReversed);
     StrVec s = split_str_by_delim(local, base, STR("\n"));
     int indx = 0;
     int lines=1;

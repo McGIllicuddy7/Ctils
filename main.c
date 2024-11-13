@@ -1,11 +1,11 @@
 #define CTILS_IMPLEMENTATION
 #include "utils.h"
-#include "utils_math.h"
+//#include "utils_math.h"
 #include "lambda.h"
 #include <stdio.h>
 #include "string_utils.h"
 #include <stdio.h>
-#include "set.h"
+
 enable_vec_type(int);
 enable_vec_type(String);
 enable_hash_type(String, int);
