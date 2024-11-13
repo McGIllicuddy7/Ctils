@@ -70,6 +70,17 @@ void * arena_alloc(Arena * arena, size_t size);
 void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size);
 void arena_free(Arena * arena, void * ptr);
 void arena_reset(Arena * arena);
+
+#define tmp_alloc(size) arena_alloc(&temporary_allocator, size);
+#define tmp_realloc(ptr,size, new_size) arena_realloc(&temporary_allocator, size, new_size)
+#define tmp_free(ptr) arena_free(&temporary_allocator, ptr)
+#define tmp_reset() arena_reset(&temporary_allocator)
+#ifndef CTILS_IMPLEMENTATION
+extern Arena temporary_allocator = {};
+#endif
+#ifdef CTILS_IMPLEMENTATION
+Arena temporary_allocator = {};
+#endif
 /*
 Slice stuff
 */
@@ -81,8 +92,11 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 
 
 #define make(arena, T) {0,0,0, arena}
+#define tmp_make(T) {0,0,0, &temporary_allocator}
 
-#define make_with_capacity(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)cap, arena}
+#define make_with_cap(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)cap, arena}
+#define tmp_make_with_cap(T, cap){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
+
 #define clone(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 #define v_append(vec, value)\
  {if(vec.capacity<vec.length+1){\
@@ -125,12 +139,19 @@ vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,v
 String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
+
 String new_string(Arena * arena,const char* str);
+#define tmp_new_string(str) new_string(&temporary_allocator,str)
 String new_string_wide(Arena * arena,const wchar_t* str);
+#define tmp_new_string_wide(str) new_string_wide(&temporary_allocator, str)
+
 String string_format(Arena * arena, const char * fmt, ...);
-String RandomStrina(Arena * arena, int minlen, int maxlen);
+#define tmp_string_format(fmt...) string_format()
+
+String string_random(Arena * arena, int minlen, int maxlen);
+#define tmp_string_random(min_len, max_len) string_random(&temporary_allocator, minlen, max_len)
 void _strconcat(String * a, const char* b, size_t b_size);
-bool StringEquals(String a, String b);
+bool string_equals(String a, String b);
 #define str_concat(a, b)\
 	_strconcat(&a,(const char *)b, sizeof(b[0]));
 
@@ -142,12 +163,12 @@ bool StringEquals(String a, String b);
 /*
 HashFunctions
 */
-size_t HashBytes(Byte * byte, size_t size);
-size_t HashInt(int in);
-size_t HashFloat(float fl);
-size_t HashLong(long lg);
-size_t HashDouble(double db);
-size_t HashString(String str);
+size_t hash_bytes(Byte * byte, size_t size);
+size_t hash_int(int in);
+size_t hash_float(float fl);
+size_t hash_long(long lg);
+size_t hash_double(double db);
+size_t hash_string(String str);
 /*
 Hashtable
 */
@@ -172,14 +193,14 @@ static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(
 	out->hash_func = hash_func;\
 	out->eq_func = eq_func;\
 	for(int i =0; i<size; i++){\
-		out->Table[i] = (T##U##KeyValuePairVec)make_with_capacity(0,T##U##KeyValuePair,16);\
+		out->Table[i] = (T##U##KeyValuePairVec)make_with_cap(0,T##U##KeyValuePair,16);\
 	}\
 	return out;\
 }\
 static void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_size){\
 	T##U##KeyValuePairVec* new_table = (T##U##KeyValuePairVec *)global_alloc(8,new_size);\
 	for(int i =0; i<new_size; i++){\
-		new_table[i] = (T##U##KeyValuePairVec)make_with_capacity(0,T##U##KeyValuePair,8);\
+		new_table[i] = (T##U##KeyValuePairVec)make_with_cap(0,T##U##KeyValuePair,8);\
 	}\
 	for(int i =0; i<table->TableSize; i++){\
 		for(int j = 0; j<len(table->Table[i]); j++){\
@@ -428,7 +449,7 @@ void arena_free(Arena * arena, void * ptr){
 Hashing
 */
 
-size_t HashBytes(Byte * bytes, size_t size){
+size_t hash_bytes(Byte * bytes, size_t size){
 	size_t out = 0;
 	const size_t pmlt = 31;
 	size_t mlt = 31;
@@ -438,23 +459,23 @@ size_t HashBytes(Byte * bytes, size_t size){
 	}
 	return out;
 }
-size_t HashInt(int in){
+size_t hash_int(int in){
 	int tmp = in;
-	return HashBytes((Byte *)&tmp, sizeof(tmp));
+	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
-size_t HashFloat(float fl){
+size_t hash_float(float fl){
 	float tmp = fl;
-	return HashBytes((Byte *)&tmp, sizeof(tmp));
+	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
-size_t HashLong(long lg){
+size_t hash_long(long lg){
 	long tmp = lg;
-	return HashBytes((Byte *)&tmp, sizeof(tmp));
+	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
-size_t HashDouble(double db){
+size_t hash_double(double db){
 	double tmp = db;
-	return HashBytes((Byte *)&tmp, sizeof(tmp));
+	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
-size_t HashString(String str){
+size_t hash_string(String str){
 	size_t out = 0;
 	const size_t pmlt = 31;
 	size_t mlt = 1;
@@ -532,10 +553,10 @@ int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
 String Stuff
 */
 #include <stdarg.h>
-bool StringEquals(String a, String b);
+bool string_equals(String a, String b);
 String new_string(Arena * arena,const char* str){
 	int l = strlen(str)+1;
-    String out = make_with_capacity(arena,str_type,l);
+    String out = make_with_cap(arena,str_type,l);
 	for(int i = 0; i<l; i++){
 		v_append(out, (str_type)str[i]);
 	}
@@ -544,7 +565,7 @@ String new_string(Arena * arena,const char* str){
 }
 String new_string_wide(Arena * arena,const wchar_t* str){
     int l = wcslen(str);
-	String out = make_with_capacity(arena,str_type, l);
+	String out = make_with_cap(arena,str_type, l);
 	for(int i = 0; i<l; i++){
 		v_append(out, (str_type)str[i]);
 	}
@@ -648,7 +669,7 @@ String string_format(Arena *arena,const char * fmt, ...){
 	va_end(args);
 	return s;
 }
-bool StringEquals(String a, String b){
+bool string_equals(String a, String b){
 	if(len(a) != len(b)){
 		return 0;
 	}
@@ -659,9 +680,9 @@ bool StringEquals(String a, String b){
 	}
 	return 1;
 }
-String RandomString(Arena * arena,int minlen, int maxlen){
+String string_random(Arena * arena,int minlen, int maxlen){
 	int length = rand()%(maxlen-minlen)+minlen;
-	String out = make_with_capacity(arena,str_type, length+1);
+	String out = make_with_cap(arena,str_type, length+1);
 	for(int i= 0; i<length+1; i++){
 		out.items[i] = 0;
 	}

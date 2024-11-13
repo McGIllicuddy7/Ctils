@@ -24,6 +24,8 @@
 
 
 #define lambda(name, ...) make##name##fn(__VA_OPT__((struct name##Captures)__VA_ARGS__))
-#define lambda_arena(name, arena,...) make##name##fn_arena(arena,__VA_OPT__(,__VA_ARGS__))
+#define lambda_arena(name, arena,...) make##name##fn_arena(arena __VA_OPT__(,(struct name##Captures)__VA_ARGS__))
+#define tmp_lambda(name,...) make##name##fn_arena(&temporary_allocator __VA_OPT__(,(struct name##Captures)__VA_ARGS__))
+#define lambda_arb(name, fn_name) (name){fn_name,0};
 #define call(func,...) func.data? func.fn(func.data __VA_OPT__(,__VA_ARGS__)) :func.fn_no_args(__VA_ARGS__)
 
