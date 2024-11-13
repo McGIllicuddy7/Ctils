@@ -24,7 +24,7 @@ fn_int box(int i){
 void test(){
     Arena * local =create_arena();
     Str delimns[] = {STR("+"), STR("/"), STR("->")};
-    StrVec dels = tokenize_str_no_info(local, STR("a+b/c->d"), delimns, sizeof(delimns)/sizeof(Str));
+    StrVec dels = tokenize_str_no_info(local, String_to_Str(read_file_to_string(local, "main.c")), delimns, sizeof(delimns)/sizeof(Str));
     for(int i =0; i<dels.length; i++){
         put_str_ln(dels.items[i]);
     }

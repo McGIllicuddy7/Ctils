@@ -4,6 +4,7 @@ typedef struct {char * items; size_t length;}Str;
 enable_vec_type(Str);
 Str String_to_Str(String s);
 String Str_to_String(Arena * arena,Str s);
+void put_str_ln(Str str);
 #define STR(st) (Str){(char*)st, (size_t)strlen(st)}
 #define substring(st, start, end)(Str){(char*)(st.items+start), (size_t)(end-start)}
 char * Str_to_c_string(Arena * arena, Str s);
