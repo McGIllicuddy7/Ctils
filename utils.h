@@ -64,7 +64,7 @@ typedef struct Arena{
     char* previous_allocation;
     struct Arena * next;
 } Arena;
-Arena * arena_init();
+Arena * arena_create();
 void arena_destroy(Arena * arena);
 void * arena_alloc(Arena * arena, size_t size);
 void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size);
@@ -350,7 +350,7 @@ void * memdup(Arena* arena, void * ptr, size_t size){
 /*
 Arena stuff
 */
-Arena * arena_init(){
+Arena * arena_create(){
     char * buffer = (char *)global_alloc(1,4096*8);
     char * next_ptr = buffer;
     char * end = buffer+4096*8;
@@ -360,7 +360,7 @@ Arena * arena_init(){
     *out = (Arena){buffer, next_ptr, end, previous_allocation, next};
     return out;
 }
-Arena * arena_init_sized(size_t reqsize){
+Arena * arena_create_sized(size_t reqsize){
     size_t size = 4096;
     while(size<=reqsize){
         size *= 2;
@@ -390,7 +390,7 @@ void * arena_alloc(Arena * arena, size_t size){
     char * previous = arena->next_ptr;
     if(previous + act_sz>arena->end){
         if (!arena->next){
-            arena->next = arena_init_sized(size);
+            arena->next = arena_create_sized(size);
         }
         if (arena->next){
             return arena_alloc(arena->next, size);

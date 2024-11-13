@@ -22,7 +22,7 @@ fn_int box(int i){
     return lambda(boxed, {i});
 }
 void test(){
-    Arena * local =arena_init();
+    Arena * local =arena_create();
     Str delimns[] = {STR("+"), STR("/"), STR("->")};
     StrVec dels = tokenize_str_no_info(local, String_to_Str(read_file_to_string(local, "main.c")), delimns, sizeof(delimns)/sizeof(Str));
     for(int i =0; i<dels.length; i++){
@@ -31,7 +31,7 @@ void test(){
     arena_destroy(local);
 }   
 void hash_test(){
-    Arena * arena = arena_init();
+    Arena * arena = arena_create();
     StringintHashTable * s = StringintHashTable_create(10, HashString, StringEquals);
     StringVec strings = make(arena,String);
     for(int i =0; i<1000; i++){

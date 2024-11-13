@@ -144,7 +144,7 @@ typedef struct{
 } CTILS_InternalToken;
 enable_vec_type(CTILS_InternalToken);
 StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count){
-    Arena * local = arena_init();
+    Arena * local = arena_create();
     CTILS_InternalTokenVec tokens = make(local, CTILS_InternalToken);
     StrVec in_delims = make_with_capacity(local, Str, delims_count);
     for(int i =0; i<delims_count; i++){
@@ -196,7 +196,7 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
     }
     tokens = tmp_buffer;
     for(int i =0; i<in_delims.length; i++){
-        Arena * temps = arena_init();
+        Arena * temps = arena_create();
         CTILS_InternalTokenVec tmp = make(temps, CTILS_InternalToken);
         for(int j =0; j<tokens.length; j++){
             if(tokens.items[j].finalized){
@@ -229,7 +229,7 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
     return out;
 }
 TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, Str file_name){
-    Arena * local = arena_init();
+    Arena * local = arena_create();
     CTILS_InternalTokenVec tokens = make(local, CTILS_InternalToken);
     StrVec in_delims = make_with_capacity(local, Str, delims_count);
     for(int i =0; i<delims_count; i++){
@@ -289,7 +289,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
     }
     tokens = tmp_buffer;
     for(int i =0; i<in_delims.length; i++){
-        Arena * temps = arena_init();
+        Arena * temps = arena_create();
         CTILS_InternalTokenVec tmp = make(temps, CTILS_InternalToken);
         for(int j =0; j<tokens.length; j++){
             if(tokens.items[j].finalized){
