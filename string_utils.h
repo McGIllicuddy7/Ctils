@@ -116,10 +116,6 @@ StrVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim){
             while(lookahead_matches(base, i, delim)){
                 i += delim.length;
             }
-            if(StrEquals(delim, STR(" "))){
-                printf("test:");
-                put_str_ln(substring(base, i, base.length));
-            }
             start = i;
         }
     }
