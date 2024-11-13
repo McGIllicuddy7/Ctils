@@ -59,41 +59,6 @@ char * Str_to_c_string(Arena * arena, Str s){
     memcpy(out, s.items, s.length);
     return out;
 }
-
-StrVec split_str_by_delim(Arena * arena,Str base, Str delim){
-    StrVec out = make(arena, Str);
-    int start = 0;
-    for(int i =0; i<base.length; i++){
-        if(base.items[i] == delim.items[0]){
-            int j = 0; 
-            bool matched = 1;
-            while(j<=base.length-i &&j<delim.length){
-                if(base.items[i+j] != delim.items[j]){
-                    matched = 0;
-                    break;
-                }
-                if(j>base.length-i){
-                    matched = 0;
-                }
-                j = j+1;
-            } 
-            if(matched){
-                if(i>start){
-                    Str tmp = substring(base, start, i);
-                    v_append(out, tmp);
-                }
-                Str tmp = substring(base, i, i+delim.length);
-                v_append(out,tmp);
-                i += delim.length;
-                start = i;
-            }
-        }
-    }
-    if(base.length>start){
-        v_append(out, substring(base, start,base.length));
-    }
-    return out;
-}
 bool lookahead_matches(Str base, int start, Str delim){
     if(start+delim.length>base.length){
         return false;
@@ -106,6 +71,27 @@ bool lookahead_matches(Str base, int start, Str delim){
     }
     return true;
 }
+StrVec split_str_by_delim(Arena * arena,Str base, Str delim){
+    StrVec out = make(arena, Str);
+    int start = 0;
+    for(int i =0; i<base.length; i++){
+        if(lookahead_matches(base, i, delim)){
+            if(i>start){
+                v_append(out, substring(base, start,i));
+            }
+            while(lookahead_matches(base, i, delim)){
+                v_append(out, substring(base,i, i+delim.length));
+                i += delim.length;
+            }
+            start = i;
+        }
+    }
+    if(base.length>start){
+        v_append(out, substring(base, start,base.length));
+    }
+    return out;
+}
+
 StrVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim){
     StrVec out = make(arena, Str);
     int start = 0;
