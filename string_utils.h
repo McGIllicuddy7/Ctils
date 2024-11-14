@@ -10,10 +10,10 @@ void put_str_ln(Str str);
 char * str_to_c_string(Arena * arena, Str s);
 StrVec str_split_by_delim(Arena * arena,Str base, Str delim);
 StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim);
-StrVec extract_string_literals(Arena *arena, Str base);
-bool StrEquals(Str a, Str b);
-int StrlenCmp(const void* a, const void* b);
-int StrlenCmpReversed(const void* a, const void* b);
+StrVec str_extract_string_literals(Arena *arena, Str base);
+bool str_equals(Str a, Str b);
+int strlen_cmp(const void* a, const void* b);
+int strlen_cmp_reversed(const void* a, const void* b);
 
 typedef struct{
     Str str;
@@ -26,16 +26,16 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
 TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, Str file);
 bool is_numbers(Str str);
 #ifdef CTILS_IMPLEMENTATION 
-Str String_to_Str(String s){
+Str string_to_str(String s){
     return (Str){s.items, s.length};
 }
-String Str_to_String(Arena * arena,Str s){
+String str_to_string(Arena * arena,Str s){
     char * out = (char*)arena_alloc(arena, s.length+1);
     memset(out, 0,s.length+1);
     memcpy(out, s.items, s.length);
     return (String){out, s.length, s.length, arena};
 }
-bool StrEquals(Str a, Str b){
+bool str_equals(Str a, Str b){
     if(a.length != b.length){
         return 0;
     } 
@@ -53,7 +53,7 @@ void put_str_ln(Str str){
     }
     printf(">\n");
 }
-char * Str_to_c_string(Arena * arena, Str s){
+char * str_to_c_string(Arena * arena, Str s){
     char * out = (char*)arena_alloc(arena, s.length+1);
     memset(out, 0,s.length+1);
     memcpy(out, s.items, s.length);
@@ -71,7 +71,7 @@ bool lookahead_matches(Str base, int start, Str delim){
     }
     return true;
 }
-StrVec split_str_by_delim(Arena * arena,Str base, Str delim){
+StrVec str_split_by_delim(Arena * arena,Str base, Str delim){
     StrVec out = make(arena, Str);
     int start = 0;
     for(int i =0; i<base.length; i++){
@@ -92,7 +92,7 @@ StrVec split_str_by_delim(Arena * arena,Str base, Str delim){
     return out;
 }
 
-StrVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim){
+StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim){
     StrVec out = make(arena, Str);
     int start = 0;
     for(int i =0; i<base.length; i++){
@@ -112,12 +112,12 @@ StrVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim){
     return out;
 }
 
-int StrlenCmp(const void *  a,const void * b){
+int strlen_cmp(const void *  a,const void * b){
     Str* s1 = (Str * )a;
     Str* s2 = (Str * )b;
     return s1->length>s2->length ? 1: s1->length<s2->length ? -1 : 0;
 }
-int StrlenCmpReversed(const void *  a,const void * b){
+int strlen_cmp_reversed(const void *  a,const void * b){
     Str* s2 = (Str * )a;
     Str* s1 = (Str * )b;
     return s1->length>s2->length ? 1: s1->length<s2->length ? -1 : 0;
@@ -129,116 +129,45 @@ typedef struct{
     bool finalized;
 } CTILS_InternalToken;
 enable_vec_type(CTILS_InternalToken);
-StrVec extract_string_literals(Arena *arena, Str base){
+StrVec str_extract_string_literals(Arena *arena, Str base){
    StrVec out = make(arena, Str);
    int last =0;
    bool inside_string = false;
    bool last_was_backslash = false;
    for(int i =0; i<base.length; i++){
+        if(base.items[i] == '"'){
+            if(!last_was_backslash){
+                if(inside_string){
+                    if(last != i){
+                        v_append(out, substring(base, last, i+1));
+                    }
+                    inside_string = false;
+                } else{
+                    if(last != i){
+                        v_append(out, substring(base, last+1, i-2);)
+                    } 
+                    inside_string = true;
+                }
+                last = i;
+            }
+        }
         if(base.items[i] == '\\'){
             last_was_backslash =true;
-        }
-        else if(base.items[i] == '"'){
-            if(inside_string){
-                if(last != i){
-                    v_append(out, substring(base, last, i+1));
-                }
-                inside_string = false;
-            } else{
-                if(last != i){
-                    v_append(out, substring(base, last, i);)
-                } 
-                inside_string = true;
-            }
-            last = i;
+        } else{
+            last_was_backslash = false;
         }
    }
    if(last != base.length-1){
-        v_append(out, substring(base, last,base.length));
+        v_append(out, substring(base, last+1,base.length));
    }
    return out;
 }
 StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count){
     Arena * local = arena_create();
-    CTILS_InternalTokenVec tokens = make(local, CTILS_InternalToken);
-    StrVec in_delims = make_with_cap(local, Str, delims_count);
-    for(int i =0; i<delims_count; i++){
-        v_append(in_delims, delims[i]);
-    }
-    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (*)(const void *, const void * ))StrlenCmpReversed);
-    StrVec s = split_str_by_delim_no_delims(local, base, STR("\n"));
-    int indx = 0;
-    int lines=1;
-    for(int i =0; i<s.length; i++){
-        if(!StrEquals(s.items[i], STR("\n"))){
-            CTILS_InternalToken tok = {};
-            tok.str = s.items[i];
-            tok.start_col = 0;
-            tok.line = lines;
-            v_append(tokens, tok);
-        } else{
-            lines ++;
-        }
-    }
-    CTILS_InternalTokenVec tmp_buffer = make(local, CTILS_InternalToken);
-        for(int i =0; i<tokens.length; i++){
-        int tmp_idx =0;
-        StrVec tmp = split_str_by_delim_no_delims(local, tokens.items[i].str, STR("\t"));
-        for(int j =0; j<tmp.length; j++){
-            CTILS_InternalToken v;
-            v.finalized = false;
-            v.str = tmp.items[j];
-            v.start_col = tmp_idx;
-            v.line = tokens.items[i].line;
-            v_append(tmp_buffer, v);
-            tmp_idx += v.str.length;
-        }
-    }
-    tokens = tmp_buffer;
-    v_resize(tmp_buffer, 0);
-    for(int i =0; i<tokens.length; i++){
-        int tmp_idx =0;
-        StrVec tmp = split_str_by_delim_no_delims(local, tokens.items[i].str, STR(" "));
-        for(int j =0; j<tmp.length; j++){ 
-            CTILS_InternalToken v;
-            v.finalized = false;
-            v.str = tmp.items[j];
-            v.start_col = tmp_idx;
-            v.line = tokens.items[i].line;
-            v_append(tmp_buffer, v);
-            tmp_idx += v.str.length;
-        }
-    }
-    tokens = tmp_buffer;
-    for(int i =0; i<in_delims.length; i++){
-        Arena * temps = arena_create();
-        CTILS_InternalTokenVec tmp = make(temps, CTILS_InternalToken);
-        for(int j =0; j<tokens.length; j++){
-            if(tokens.items[j].finalized){
-                v_append(tmp, tokens.items[j]);
-                continue;
-            }
-            StrVec strs = split_str_by_delim(temps,tokens.items[j].str, in_delims.items[i]);
-            int offset =tokens.items[j].start_col;
-            for(int k= 0; k<strs.length; k++){
-                CTILS_InternalToken tok;
-                tok.line = tokens.items[j].line;
-                tok.start_col = offset;
-                tok.finalized = StrEquals(strs.items[k], in_delims.items[i]);
-                tok.str = strs.items[k];
-                offset += tok.str.length;
-                v_append(tmp, tok);
-            }
-        }
-        v_resize(tokens, 0);
-        for(int j =0; j<tmp.length; j++){
-            v_append(tokens, tmp.items[j]);
-        }
-        arena_destroy(temps);
-    }
-    StrVec out = make_with_cap(arena, Str, tokens.length);
-    for(int i =0; i<tokens.length; i++){
-        v_append(out, tokens.items[i].str);
+    TokenVec vec= tokenize_str(local, base, delims, delims_count, STR(""));
+    StrVec out = make_with_cap(arena, Str, vec.length);
+    for(int i=0; i<vec.length; i++){
+        v_append(out, vec.items[i].str);
     }
     arena_destroy(local);
     return out;
@@ -250,12 +179,12 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
     for(int i =0; i<delims_count; i++){
         v_append(in_delims, delimns[i]);
     }
-    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (*)(const void *, const void * ))StrlenCmpReversed);
-    StrVec s = split_str_by_delim(local, base, STR("\n"));
+    qsort(in_delims.items, in_delims.length, sizeof(Str), (int (*)(const void *, const void * ))strlen_cmp_reversed);
+    StrVec s = str_split_by_delim(local, base, STR("\n"));
     int indx = 0;
     int lines=1;
     for(int i =0; i<s.length; i++){
-        if(!StrEquals(s.items[i], STR("\n"))){
+        if(!str_equals(s.items[i], STR("\n"))){
             CTILS_InternalToken tok = {};
             tok.str = s.items[i];
             tok.start_col = 0;
@@ -266,13 +195,32 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
         }
     }
     CTILS_InternalTokenVec tmp_buffer = make(local, CTILS_InternalToken);
-        for(int i =0; i<tokens.length; i++){
+    for(int i =0; i<tokens.length; i++){
         int tmp_idx =0;
-        StrVec tmp = split_str_by_delim(local, tokens.items[i].str, STR("\t"));
+        StrVec tmp = str_extract_string_literals(local, tokens.items[i].str);
         for(int j =0; j<tmp.length; j++){
-            if(StrEquals(tmp.items[j], STR("\t"))){
+            CTILS_InternalToken v;
+            v.finalized = tmp.items[j].items[0] == '"';
+            v.str = tmp.items[j];
+            v.start_col = tmp_idx;
+            v.line = tokens.items[i].line;
+            v_append(tmp_buffer, v);
+            tmp_idx += v.str.length; 
+        }
+    }
+    tokens = tmp_buffer;
+    v_resize(tmp_buffer, 0);
+    for(int i =0; i<tokens.length; i++){
+        int tmp_idx =0;
+        if(tokens.items[i].finalized){
+            v_append(tmp_buffer, tokens.items[i]);
+            continue;
+        }
+        StrVec tmp = str_split_by_delim(local, tokens.items[i].str, STR("\t"));
+        for(int j =0; j<tmp.length; j++){
+            if(str_equals(tmp.items[j], STR("\t"))){
                 tmp_idx ++;
-                continue;;
+                continue;
             }
             CTILS_InternalToken v;
             v.finalized = false;
@@ -286,10 +234,14 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
     tokens = tmp_buffer;
     v_resize(tmp_buffer, 0);
     for(int i =0; i<tokens.length; i++){
+        if(tokens.items[i].finalized){
+            v_append(tmp_buffer, tokens.items[i]);
+            continue;
+        }
         int tmp_idx =0;
-        StrVec tmp = split_str_by_delim(local, tokens.items[i].str, STR(" "));
+        StrVec tmp = str_split_by_delim(local, tokens.items[i].str, STR(" "));
         for(int j =0; j<tmp.length; j++){
-            if(StrEquals(tmp.items[j], STR(" "))){
+            if(str_equals(tmp.items[j], STR(" "))){
                 tmp_idx ++;
                 continue;
             }
@@ -311,13 +263,13 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
                 v_append(tmp, tokens.items[j]);
                 continue;
             }
-            StrVec strs = split_str_by_delim(temps,tokens.items[j].str, in_delims.items[i]);
+            StrVec strs = str_split_by_delim(temps,tokens.items[j].str, in_delims.items[i]);
             int offset =tokens.items[j].start_col;
             for(int k= 0; k<strs.length; k++){
                 CTILS_InternalToken tok;
                 tok.line = tokens.items[j].line;
                 tok.start_col = offset;
-                tok.finalized = StrEquals(strs.items[k], in_delims.items[i]);
+                tok.finalized = str_equals(strs.items[k], in_delims.items[i]);
                 tok.str = strs.items[k];
                 offset += tok.str.length;
                 v_append(tmp, tok);

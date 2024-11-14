@@ -25,7 +25,7 @@ void test(){
     call(test);
     Arena * local =arena_create();
     Str delimns[] = {STR("+"), STR("-"), STR("*"),STR("/"),STR("<"), STR(">"), STR("#"), STR("->"), STR("("), STR(")"),STR("()") ,STR(","), STR("{"), STR("}"), STR(";"), STR("="), STR("==")};
-    StrVec dels = tokenize_str_no_info(local, String_to_Str(read_file_to_string(local, "main.c")), delimns, sizeof(delimns)/sizeof(Str));
+    StrVec dels = tokenize_str_no_info(local, string_to_str(read_file_to_string(local, "main.c")), delimns, sizeof(delimns)/sizeof(Str));
     for(int i =0; i<dels.length; i++){
         put_str_ln(dels.items[i]);
     }
@@ -33,8 +33,9 @@ void test(){
 }   
 void test2(){
     Arena * local = arena_create();
-    Str test = STR("\"hello world\" testing" );
-    StrVec vec = extract_string_literals(local,test);
+    Str test1 = string_to_str(read_file_to_string(local, "main.c"));
+    Str test2 = STR("\"bruh\"");
+    StrVec vec = str_extract_string_literals(local,test1);
     for(int i  =0; i<vec.length; i++){
         put_str_ln(vec.items[i]);
     }
