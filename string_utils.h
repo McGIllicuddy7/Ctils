@@ -129,39 +129,6 @@ typedef struct{
     bool finalized;
 } CTILS_InternalToken;
 enable_vec_type(CTILS_InternalToken);
-StrVec str_extract_string_literals(Arena *arena, Str base){
-   StrVec out = make(arena, Str);
-   int last =0;
-   bool inside_string = false;
-   bool last_was_backslash = false;
-   for(int i =0; i<base.length; i++){
-        if(base.items[i] == '"'){
-            if(!last_was_backslash){
-                if(inside_string){
-                    if(last != i){
-                        v_append(out, substring(base, last, i+1));
-                    }
-                    inside_string = false;
-                } else{
-                    if(last != i){
-                        v_append(out, substring(base, last+1, i-2);)
-                    } 
-                    inside_string = true;
-                }
-                last = i;
-            }
-        }
-        if(base.items[i] == '\\'){
-            last_was_backslash =true;
-        } else{
-            last_was_backslash = false;
-        }
-   }
-   if(last != base.length-1){
-        v_append(out, substring(base, last+1,base.length));
-   }
-   return out;
-}
 StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count){
     Arena * local = arena_create();
     TokenVec vec= tokenize_str(local, base, delims, delims_count, STR(""));
@@ -172,13 +139,16 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
     arena_destroy(local);
     return out;
 }
-TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, Str file_name){
+TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, Str file_name){
     Arena * local = arena_create();
+
     CTILS_InternalTokenVec tokens = make(local, CTILS_InternalToken);
     StrVec in_delims = make_with_cap(local, Str, delims_count);
     for(int i =0; i<delims_count; i++){
-        v_append(in_delims, delimns[i]);
+        v_append(in_delims, delims[i]);
     }
+    v_append(in_delims, STR("\""));
+    v_append(in_delims, STR("\\\""));
     qsort(in_delims.items, in_delims.length, sizeof(Str), (int (*)(const void *, const void * ))strlen_cmp_reversed);
     StrVec s = str_split_by_delim(local, base, STR("\n"));
     int indx = 0;
@@ -195,21 +165,6 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
         }
     }
     CTILS_InternalTokenVec tmp_buffer = make(local, CTILS_InternalToken);
-    for(int i =0; i<tokens.length; i++){
-        int tmp_idx =0;
-        StrVec tmp = str_extract_string_literals(local, tokens.items[i].str);
-        for(int j =0; j<tmp.length; j++){
-            CTILS_InternalToken v;
-            v.finalized = tmp.items[j].items[0] == '"';
-            v.str = tmp.items[j];
-            v.start_col = tmp_idx;
-            v.line = tokens.items[i].line;
-            v_append(tmp_buffer, v);
-            tmp_idx += v.str.length; 
-        }
-    }
-    tokens = tmp_buffer;
-    v_resize(tmp_buffer, 0);
     for(int i =0; i<tokens.length; i++){
         int tmp_idx =0;
         if(tokens.items[i].finalized){
@@ -281,6 +236,32 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delimns, int delims_count, 
         }
         arena_destroy(temps);
     }
+    CTILS_InternalTokenVec tmp = make(local, Token);
+    for(int i =0; i<tokens.length; i++){
+        if(str_equals(tokens.items[i].str, STR("\""))){
+            int start = i;
+            int length =0;
+            for(int j =i+1; j<tokens.length;j++){
+                length += tokens.items[j].str.length;
+                i++;
+                if(str_equals(tokens.items[j].str, STR("\""))){
+                    CTILS_InternalToken tok = tokens.items[start];
+                    tok.str.length += length;
+                    v_append(tmp,tok);
+                    break;
+                }
+            }
+            if(i>tokens.length){
+                    CTILS_InternalToken tok = tokens.items[start];
+                    tok.str.length += length;
+                    v_append(tmp,tok);
+                    break; 
+            }
+        } else{
+            v_append(tmp, tokens.items[i]);
+        }
+    }
+    tokens = tmp;
     TokenVec out = make_with_cap(arena, Token, tokens.length);
     for(int i =0; i<tokens.length; i++){
         CTILS_InternalToken s = tokens.items[i];

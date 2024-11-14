@@ -31,16 +31,7 @@ void test(){
     }
     arena_destroy(local);
 }   
-void test2(){
-    Arena * local = arena_create();
-    Str test1 = string_to_str(read_file_to_string(local, "main.c"));
-    Str test2 = STR("\"bruh\"");
-    StrVec vec = str_extract_string_literals(local,test1);
-    for(int i  =0; i<vec.length; i++){
-        put_str_ln(vec.items[i]);
-    }
-    arena_destroy(local);
-}
+
 void hash_test(){
     Arena * arena = arena_create();
     StringintHashTable * s = StringintHashTable_create(10, hash_string, string_equals);
@@ -61,6 +52,6 @@ void hash_test(){
     debug_alloc_and_global_free_counts();
 }
 int main(int argc, const char ** argv){
-    test2();
+    test();
     return 0;
 }
