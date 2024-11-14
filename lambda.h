@@ -29,3 +29,5 @@
 #define lambda_arb(name, fn_name) (name){fn_name,0};
 #define call(func,...) func.data? func.fn(func.data __VA_OPT__(,__VA_ARGS__)) :func.fn_no_args(__VA_ARGS__)
 
+
+

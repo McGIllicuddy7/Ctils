@@ -18,7 +18,6 @@ make_lambda_capture(fn_int_to_int, int, add, {return a+captures->b;}, {int b;}, 
 make_lambda(fn_int_to_int, int, add12, {return a+12;}, int a)
 
 make_lambda_type(int, int);
-
 void test(){
     fn_void test = lambda(testing123);
     call(test);
@@ -32,6 +31,15 @@ void test(){
     }
     arena_destroy(local);
 }   
+void test2(){
+    Arena * local = arena_create();
+    Str test = STR("\"hello world\" testing" );
+    StrVec vec = extract_string_literals(local,test);
+    for(int i  =0; i<vec.length; i++){
+        put_str_ln(vec.items[i]);
+    }
+    arena_destroy(local);
+}
 void hash_test(){
     Arena * arena = arena_create();
     StringintHashTable * s = StringintHashTable_create(10, hash_string, string_equals);
@@ -52,6 +60,6 @@ void hash_test(){
     debug_alloc_and_global_free_counts();
 }
 int main(int argc, const char ** argv){
-    test();
+    test2();
     return 0;
 }

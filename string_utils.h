@@ -2,14 +2,14 @@
 #include "utils.h"
 typedef struct {char * items; size_t length;}Str;
 enable_vec_type(Str);
-Str String_to_Str(String s);
-String Str_to_String(Arena * arena,Str s);
+Str string_to_str(String s);
+String str_to_string(Arena * arena,Str s);
 void put_str_ln(Str str);
 #define STR(st) (Str){(char*)st, (size_t)strlen(st)}
 #define substring(st, start, end)(Str){(char*)(st.items+start), (size_t)(end-start)}
-char * Str_to_c_string(Arena * arena, Str s);
-StrVec split_str_by_delim(Arena * arena,Str base, Str delim);
-StrVec split_str_by_delim_no_delims(Arena * arena,Str base, Str delim);
+char * str_to_c_string(Arena * arena, Str s);
+StrVec str_split_by_delim(Arena * arena,Str base, Str delim);
+StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim);
 StrVec extract_string_literals(Arena *arena, Str base);
 bool StrEquals(Str a, Str b);
 int StrlenCmp(const void* a, const void* b);
@@ -130,7 +130,33 @@ typedef struct{
 } CTILS_InternalToken;
 enable_vec_type(CTILS_InternalToken);
 StrVec extract_string_literals(Arena *arena, Str base){
-    
+   StrVec out = make(arena, Str);
+   int last =0;
+   bool inside_string = false;
+   bool last_was_backslash = false;
+   for(int i =0; i<base.length; i++){
+        if(base.items[i] == '\\'){
+            last_was_backslash =true;
+        }
+        else if(base.items[i] == '"'){
+            if(inside_string){
+                if(last != i){
+                    v_append(out, substring(base, last, i+1));
+                }
+                inside_string = false;
+            } else{
+                if(last != i){
+                    v_append(out, substring(base, last, i);)
+                } 
+                inside_string = true;
+            }
+            last = i;
+        }
+   }
+   if(last != base.length-1){
+        v_append(out, substring(base, last,base.length));
+   }
+   return out;
 }
 StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count){
     Arena * local = arena_create();
