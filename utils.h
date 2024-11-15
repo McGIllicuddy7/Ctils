@@ -135,6 +135,7 @@ while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{v
 vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 
 #define len(vec) (vec).length
+
 /*
 String stuff
 */

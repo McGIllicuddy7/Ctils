@@ -51,7 +51,14 @@ void hash_test(){
     arena_destroy(arena);
     debug_alloc_and_global_free_counts();
 }
+void test3(){
+    Arena * local =arena_create();
+    String str = read_file_to_string(local, "test.lisp");
+    ListParserAstNode list = parse_str_to_list(local, string_to_str(str), STR("("), STR(")"), STR(","), STR("test.lisp"));
+    printf("%s\n", list_parser_ast_node_print(local,list).items);
+    arena_destroy(local);
+}
 int main(int argc, const char ** argv){
-    test();
+    test3();
     return 0;
 }
