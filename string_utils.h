@@ -49,7 +49,7 @@ typedef struct ListParserAstNode{
 }ListParserAstNode;
 enable_vec_type(ListParserAstNode);
 String list_parser_ast_node_print(Arena * arena,ListParserAstNode list);
-ListParserAstNode parse_tokens_to_list(Arena * arena, Token *tokens, size_t tokens_length, Str list_begin, Str list_end, Str seperator);
+ListParserAstNode parse_tokens_to_list(Arena * arena, Token **tokens, Token * tokens_end, Str list_begin, Str list_end, Str seperator);
 ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str list_end, Str seperator, Str file_name);
 #ifdef CTILS_IMPLEMENTATION 
 Str string_to_str(String s){
@@ -171,7 +171,6 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
 }
 TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, Str file_name){
     Arena * local = arena_create();
-
     CTILS_InternalTokenVec tokens = make(local, CTILS_InternalToken);
     StrVec in_delims = make_with_cap(local, Str, delims_count);
     for(int i =0; i<delims_count; i++){
@@ -190,6 +189,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             tok.start_col = 0;
             tok.line = lines;
             v_append(tokens, tok);
+            tok.finalized = false;
         } else{
             lines ++;
         }
@@ -207,7 +207,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
                 tmp_idx ++;
                 continue;
             }
-            CTILS_InternalToken v;
+            CTILS_InternalToken v = {};
             v.finalized = false;
             v.str = tmp.items[j];
             v.start_col = tmp_idx;
@@ -216,6 +216,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             tmp_idx += v.str.length;
         }
     }
+    
     tokens = tmp_buffer;
     v_resize(tmp_buffer, 0);
     for(int i =0; i<tokens.length; i++){
@@ -225,12 +226,14 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
         }
         int tmp_idx =0;
         StrVec tmp = str_split_by_delim(local, tokens.items[i].str, STR(" "));
+        printf("new line:\n");
         for(int j =0; j<tmp.length; j++){
+            put_str_ln(tmp.items[j]);
             if(str_equals(tmp.items[j], STR(" "))){
                 tmp_idx ++;
                 continue;
             }
-            CTILS_InternalToken v;
+            CTILS_InternalToken v = {};
             v.finalized = false;
             v.str = tmp.items[j];
             v.start_col = tmp_idx;
@@ -239,7 +242,12 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             tmp_idx += v.str.length;
         }
     }
+    for(int i =0; i<tokens.length; i++){
+        printf("tokens:");
+        put_str_ln(tokens.items[i].str);
+    }
     tokens = tmp_buffer;
+    v_resize(tmp_buffer, 0);
     for(int i =0; i<in_delims.length; i++){
         Arena * temps = arena_create();
         CTILS_InternalTokenVec tmp = make(temps, CTILS_InternalToken);
@@ -340,6 +348,7 @@ String string_indent(Arena * arena,String s, int depth){
     for(int i =0; i<s.length; i++){
         if(s.items[i] == '\n'){
             if(i<s.length-1){
+                str_v_append(out, '\n');
                 for(int j =0; j<depth; j++){
                     str_v_append(out, ' ');
                 } 
@@ -358,71 +367,86 @@ String token_print(Arena * arena,Token tok){
 
 String list_parser_ast_node_print(Arena * arena,ListParserAstNode list){
     Arena * local = arena_create();
-    String out = new_string(arena,"(\n");
+    String out = new_string(arena,"");
     switch (list.type){
         case LPAN_ERROR: str_concat(out, "    ERROR"); break;
         case LPAN_FLOAT: str_concat(out, string_format(local,"    %lf,",list.v_float).items); break;
         case LPAN_INTEGER:str_concat(out, string_format(local,"    %ld,",list.v_long).items); break;
-        case LPAN_IDENTIFIER:str_concat(out,string_format(local, "    %s,", token_print(local, list.v_identifier).items).items); break;
+        case LPAN_IDENTIFIER:out= string_format(arena, "%s %s,",out.items, str_to_c_string(arena,list.v_identifier.str)); break;
         case LPAN_LIST:{
+            str_concat(out, "{");
             for(int i =0; i<list.v_list_len; i++){
                 String tmp = list_parser_ast_node_print(local, list.v_list_begin[i]);
                 str_concat(out,string_indent(local, tmp, 4).items);
                 str_concat(out, "\n");
             }
-            str_concat(out, "\n");
+            str_concat(out, "\n}");
             break;
         }
     }
-    str_concat(out, "\n)");
+    str_concat(out, "");
     arena_destroy(local);
     return out;
 }
 
-ListParserAstNode parse_tokens_to_list(Arena * arena, Token *tokens, size_t tokens_length, Str list_begin, Str list_end, Str seperator){
+ListParserAstNode parse_tokens_to_list(Arena * arena, Token **tokens, Token * tokens_end, Str list_begin, Str list_end, Str seperator){
     size_t sz = sizeof(ListParserAstNode);
     ListParserAstNode out = {};
-    if(token_equals(tokens[0], list_begin)){
-        ListParserAstNodeVec vec = make(arena, ListParserAstNodeVec);
-        Token * iter = tokens;
-        Token*end = tokens+tokens_length;
-        while(iter != end){
-            iter++;
-            if(iter == end){
+    if(str_equals((*tokens)[0].str, list_begin)){
+        printf("found list\n");
+        (*tokens)++;
+        ListParserAstNodeVec nodes = make(arena, ListParserAstNode);
+        while(!str_equals((*tokens)[0].str, list_end)){
+            if(*tokens >= tokens_end){
                 break;
             }
-            if(token_equals(*iter, list_end)){
-                break;
-            }
-            else{
-                ListParserAstNode node = parse_tokens_to_list(arena, iter, 1,list_begin, list_end, seperator);
-                v_append(vec,(node));
-            }
+            v_append(nodes, parse_tokens_to_list(arena, tokens, tokens_end, list_begin, list_end, seperator));
+            (*tokens)++;
         }
-        out.v_list_begin = vec.items;
         out.type = LPAN_LIST;
-        out.v_list_len = vec.length;
+        out.v_list_begin = nodes.items;
+        out.v_list_len = nodes.length;
     } else{
-        out.type = LPAN_IDENTIFIER;
-        out.v_identifier = tokens[0];
+        if(*tokens < tokens_end){
+            out.type = LPAN_IDENTIFIER;
+            out.v_identifier = (*tokens)[0];
+        }
     }
     return out;
 }
-
 ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str list_end, Str seperator, Str file_name){
     Arena * local = arena_create();
-    StrVec delims = make_with_cap(local, Str, 3);
+    bool is_white_space = str_equals(seperator, STR(" "));
+    StrVec delims = make_with_cap(local, Str, is_white_space? 5: 3);
     v_append(delims, list_begin);
-    v_append(delims, list_begin);
-    v_append(delims, seperator);
-    TokenVec tokens = tokenize_str(local, base,delims.items,3, file_name);
+    v_append(delims, list_end);
+    if(is_white_space){
+        v_append(delims,STR("\t"));
+        v_append(delims, STR("\r"));
+    } else{
+        v_append(delims, seperator);
+    }
+    TokenVec tokens = tokenize_str(local, base,delims.items,delims.length, file_name);
     TokenVec new_tokens = make_with_cap(local, Token, tokens.length);
+    printf("tokens:\n");
     for(int i =0; i<tokens.length; i++){
-        if(!token_equals(tokens.items[i], seperator)){
+        put_str_ln(tokens.items[i].str);
+    }
+    for(int i =0; i<tokens.length; i++){
+        if(is_white_space){
+            if(!token_equals(tokens.items[i], seperator) && !token_equals(tokens.items[i], STR("\t"))&& !token_equals(tokens.items[i], STR("\r"))){
+                v_append(new_tokens, tokens.items[i]);
+            }
+        }
+        else if(!token_equals(tokens.items[i], seperator)){
             v_append(new_tokens, tokens.items[i]);
         }
     }
-    ListParserAstNode out = parse_tokens_to_list(arena,new_tokens.items, new_tokens.length, list_begin, list_end, seperator);
+    printf("new tokens:\n");
+    for(int i =0; i<new_tokens.length; i++){
+        put_str_ln(new_tokens.items[i].str);
+    }
+    ListParserAstNode out = parse_tokens_to_list(arena,&(new_tokens.items), new_tokens.items+new_tokens.length, list_begin, list_end, seperator);
     return out;
 }
 #endif

@@ -58,7 +58,27 @@ void test3(){
     printf("%s\n", list_parser_ast_node_print(local,list).items);
     arena_destroy(local);
 }
+void test4(){
+    Arena * local = arena_create();
+    String s = read_file_to_string(local, "test.lisp");
+    s= string_indent(local, s, 4);
+    printf("%s\n", s.items);
+    arena_destroy(local);
+}
+void test5(){
+    Arena * local = arena_create();
+    String s = read_file_to_string(local, "test.lisp");
+    StrVec delims = make_with_cap(local, Str,3);
+    v_append(delims, STR("("));
+    v_append(delims, STR(")"));
+    v_append(delims, STR(","));
+    TokenVec tokens = tokenize_str(local, string_to_str(s), delims.items, 
+    delims.length, STR("test.lisp"));
+    for(int i =0; i<tokens.length; i++){
+        put_str_ln(tokens.items[i].str);
+    }
+}
 int main(int argc, const char ** argv){
-    test3();
+    test5();
     return 0;
 }
