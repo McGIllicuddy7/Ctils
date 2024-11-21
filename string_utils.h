@@ -74,6 +74,7 @@ bool str_equals(Str a, Str b){
 }
 void put_str_ln(Str str){
     printf("<");
+    assert(str.length >0);
     for(int i =0;i<str.length; i++){
         printf("%c", str.items[i]);
     }
@@ -216,9 +217,8 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             tmp_idx += v.str.length;
         }
     }
-    
-    tokens = tmp_buffer;
-    v_resize(tmp_buffer, 0);
+    tokens = (CTILS_InternalTokenVec)clone(tmp_buffer, local);
+    tmp_buffer.length = 0;
     for(int i =0; i<tokens.length; i++){
         if(tokens.items[i].finalized){
             v_append(tmp_buffer, tokens.items[i]);
@@ -226,9 +226,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
         }
         int tmp_idx =0;
         StrVec tmp = str_split_by_delim(local, tokens.items[i].str, STR(" "));
-        printf("new line:\n");
         for(int j =0; j<tmp.length; j++){
-            put_str_ln(tmp.items[j]);
             if(str_equals(tmp.items[j], STR(" "))){
                 tmp_idx ++;
                 continue;
@@ -242,12 +240,12 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             tmp_idx += v.str.length;
         }
     }
+    tokens = (CTILS_InternalTokenVec)clone(tmp_buffer, local);
+    tmp_buffer.length = 0;
     for(int i =0; i<tokens.length; i++){
-        printf("tokens:");
+        printf("line:");
         put_str_ln(tokens.items[i].str);
     }
-    tokens = tmp_buffer;
-    v_resize(tmp_buffer, 0);
     for(int i =0; i<in_delims.length; i++){
         Arena * temps = arena_create();
         CTILS_InternalTokenVec tmp = make(temps, CTILS_InternalToken);
@@ -299,7 +297,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             v_append(tmp, tokens.items[i]);
         }
     }
-    tokens = tmp;
+    tokens = (CTILS_InternalTokenVec)clone(tmp, local);
     TokenVec out = make_with_cap(arena, Token, tokens.length);
     for(int i =0; i<tokens.length; i++){
         CTILS_InternalToken s = tokens.items[i];
@@ -427,8 +425,7 @@ ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str
         v_append(delims, seperator);
     }
     TokenVec tokens = tokenize_str(local, base,delims.items,delims.length, file_name);
-    TokenVec new_tokens = make_with_cap(local, Token, tokens.length);
-    printf("tokens:\n");
+    TokenVec new_tokens = make_with_cap(local, Token, tokens.length); 
     for(int i =0; i<tokens.length; i++){
         put_str_ln(tokens.items[i].str);
     }

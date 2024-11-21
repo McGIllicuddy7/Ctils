@@ -74,11 +74,8 @@ void test5(){
     v_append(delims, STR(","));
     TokenVec tokens = tokenize_str(local, string_to_str(s), delims.items, 
     delims.length, STR("test.lisp"));
-    for(int i =0; i<tokens.length; i++){
-        put_str_ln(tokens.items[i].str);
-    }
 }
 int main(int argc, const char ** argv){
-    test5();
+    test3();
     return 0;
 }

@@ -70,7 +70,6 @@ void * arena_alloc(Arena * arena, size_t size);
 void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size);
 void arena_free(Arena * arena, void * ptr);
 void arena_reset(Arena * arena);
-
 #define tmp_alloc(size) arena_alloc(&temporary_allocator, size);
 #define tmp_realloc(ptr,size, new_size) arena_realloc(&temporary_allocator, size, new_size)
 #define tmp_free(ptr) arena_free(&temporary_allocator, ptr)
@@ -97,7 +96,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 #define make_with_cap(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)cap, arena}
 #define tmp_make_with_cap(T, cap){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
 
-#define clone(vec, arena){arena_memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
+#define clone(vec, arena)(typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 #define v_append(vec, value)\
  {if(vec.capacity<vec.length+1){\
     if (vec.capacity != 0){ vec.items =(typeof(vec.items))arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
