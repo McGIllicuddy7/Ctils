@@ -71,7 +71,7 @@ void test5(){
     StrVec delims = make_with_cap(local, Str,3);
     v_append(delims, STR("("));
     v_append(delims, STR(")"));
-    v_append(delims, STR(","));
+    v_append(delims, STR(" "));
     TokenVec tokens = tokenize_str(local, string_to_str(s), delims.items, 
     delims.length, STR("test.lisp"));
 }
