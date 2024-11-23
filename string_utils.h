@@ -1,19 +1,6 @@
 #pragma once
 #include "utils.h"
-typedef struct {char * items; size_t length;}Str;
-enable_vec_type(Str);
-Str string_to_str(String s);
-String str_to_string(Arena * arena,Str s);
-void put_str_ln(Str str);
-#define STR(st) (Str){(char*)st, (size_t)strlen(st)}
-#define substring(st, start, end)(Str){(char*)(st.items+start), (size_t)(end-start)}
-char * str_to_c_string(Arena * arena, Str s);
-StrVec str_split_by_delim(Arena * arena,Str base, Str delim);
-StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim);
-bool str_equals(Str a, Str b);
-int strlen_cmp(const void* a, const void* b);
-int strlen_cmp_reversed(const void* a, const void* b);
-String string_indent(Arena * arena,String s, int depth);
+
 
 typedef struct{
     Str str;
@@ -52,103 +39,7 @@ String list_parser_ast_node_print(Arena * arena,ListParserAstNode list);
 ListParserAstNode parse_tokens_to_list(Arena * arena, Token **tokens, Token * tokens_end, Str list_begin, Str list_end, Str seperator);
 ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str list_end, Str seperator, Str file_name);
 #ifdef CTILS_IMPLEMENTATION 
-Str string_to_str(String s){
-    return (Str){s.items, s.length};
-}
-String str_to_string(Arena * arena,Str s){
-    char * out = (char*)arena_alloc(arena, s.length+1);
-    memset(out, 0,s.length+1);
-    memcpy(out, s.items, s.length);
-    return (String){out, s.length, s.length, arena};
-}
-bool str_equals(Str a, Str b){
-    if(a.length != b.length){
-        return 0;
-    } 
-    for(int i= 0; i<a.length; i++){
-        if(a.items[i] != b.items[i]){
-            return false;
-        }
-    }
-    return true;
-}
-void put_str_ln(Str str){
-    printf("<");
-    assert(str.length >0);
-    for(int i =0;i<str.length; i++){
-        printf("%c", str.items[i]);
-    }
-    printf(">\n");
-}
-char * str_to_c_string(Arena * arena, Str s){
-    char * out = (char*)arena_alloc(arena, s.length+1);
-    memset(out, 0,s.length+1);
-    memcpy(out, s.items, s.length);
-    return out;
-}
-bool lookahead_matches(Str base, int start, Str delim){
-    if(start+delim.length>base.length){
-        return false;
-    }
-    for(int i=start; i<start+delim.length; i++){
-        if(base.items[i] != delim.items[i-start]){
 
-            return false;
-        }
-    }
-    return true;
-}
-StrVec str_split_by_delim(Arena * arena,Str base, Str delim){
-    StrVec out = make(arena, Str);
-    int start = 0;
-    for(int i =0; i<base.length; i++){
-        if(lookahead_matches(base, i, delim)){
-            if(i>start){
-                v_append(out, substring(base, start,i));
-            }
-            while(lookahead_matches(base, i, delim)){
-                v_append(out, substring(base,i, i+delim.length));
-                i += delim.length;
-            }
-            start = i;
-        }
-    }
-    if(base.length>start){
-        v_append(out, substring(base, start,base.length));
-    }
-    return out;
-}
-
-StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim){
-    StrVec out = make(arena, Str);
-    int start = 0;
-    for(int i =0; i<base.length; i++){
-        if(lookahead_matches(base, i, delim)){
-            if(i>start){
-                v_append(out, substring(base, start,i));
-            }
-            while(lookahead_matches(base, i, delim)){
-                i += delim.length;
-            }
-            start = i;
-        }
-    }
-    if(base.length>start){
-        v_append(out, substring(base, start,base.length));
-    }
-    return out;
-}
-
-int strlen_cmp(const void *  a,const void * b){
-    Str* s1 = (Str * )a;
-    Str* s2 = (Str * )b;
-    return s1->length>s2->length ? 1: s1->length<s2->length ? -1 : 0;
-}
-int strlen_cmp_reversed(const void *  a,const void * b){
-    Str* s2 = (Str * )a;
-    Str* s1 = (Str * )b;
-    return s1->length>s2->length ? 1: s1->length<s2->length ? -1 : 0;
-}
 bool token_equals(Token tok, Str str){
     return str_equals(tok.str, str);
 }
@@ -217,7 +108,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             tmp_idx += v.str.length;
         }
     }
-    tokens = (CTILS_InternalTokenVec)clone(tmp_buffer, local);
+    v_swap(tokens, tmp_buffer);
     tmp_buffer.length = 0;
     for(int i =0; i<tokens.length; i++){
         if(tokens.items[i].finalized){
@@ -240,7 +131,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             tmp_idx += v.str.length;
         }
     }
-    tokens = (CTILS_InternalTokenVec)clone(tmp_buffer, local);
+    v_swap(tokens, tmp_buffer);
     tmp_buffer.length = 0;
     for(int i =0; i<in_delims.length; i++){
         Arena * temps = arena_create();
@@ -293,7 +184,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
             v_append(tmp, tokens.items[i]);
         }
     }
-    tokens = (CTILS_InternalTokenVec)clone(tmp, local);
+    v_swap(tokens,tmp);
     TokenVec out = make_with_cap(arena, Token, tokens.length);
     for(int i =0; i<tokens.length; i++){
         CTILS_InternalToken s = tokens.items[i];

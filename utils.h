@@ -97,6 +97,8 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 #define tmp_make_with_cap(T, cap){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
 
 #define clone(vec, arena)(typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
+#define v_copy_into()
+#define v_swap(a, b) {typeof(a) v_swap_temporary_value = a; a =b; b = v_swap_temporary_value;}
 #define v_append(vec, value)\
  {if(vec.capacity<vec.length+1){\
     if (vec.capacity != 0){ vec.items =(typeof(vec.items))arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
@@ -134,7 +136,7 @@ while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{v
 vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 
 #define len(vec) (vec).length
-
+;
 /*
 String stuff
 */
@@ -159,6 +161,25 @@ bool string_equals(String a, String b);
 	v_resize(a, len(a)+1);\
 	a.items[len(a)-3] = b;\
 	a.items[len(a)-2] = '\0'\
+
+
+/*
+Str stuff
+*/
+typedef struct {char * items; size_t length;}Str;
+enable_vec_type(Str);
+Str string_to_str(String s);
+String str_to_string(Arena * arena,Str s);
+void put_str_ln(Str str);
+#define STR(st) (Str){(char*)st, (size_t)strlen(st)}
+#define substring(st, start, end)(Str){(char*)(st.items+start), (size_t)(end-start)}
+char * str_to_c_string(Arena * arena, Str s);
+StrVec str_split_by_delim(Arena * arena,Str base, Str delim);
+StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim);
+bool str_equals(Str a, Str b);
+int strlen_cmp(const void* a, const void* b);
+int strlen_cmp_reversed(const void* a, const void* b);
+String string_indent(Arena * arena,String s, int depth);
 
 /*
 HashFunctions
@@ -548,7 +569,106 @@ int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
     }
     return 1;
 }
+/* 
+Str stuff
+*/
+Str string_to_str(String s){
+    return (Str){s.items, s.length};
+}
+String str_to_string(Arena * arena,Str s){
+    char * out = (char*)arena_alloc(arena, s.length+1);
+    memset(out, 0,s.length+1);
+    memcpy(out, s.items, s.length);
+    return (String){out, s.length, s.length, arena};
+}
+bool str_equals(Str a, Str b){
+    if(a.length != b.length){
+        return 0;
+    } 
+    for(int i= 0; i<a.length; i++){
+        if(a.items[i] != b.items[i]){
+            return false;
+        }
+    }
+    return true;
+}
+void put_str_ln(Str str){
+    printf("<");
+    assert(str.length >0);
+    for(int i =0;i<str.length; i++){
+        printf("%c", str.items[i]);
+    }
+    printf(">\n");
+}
+char * str_to_c_string(Arena * arena, Str s){
+    char * out = (char*)arena_alloc(arena, s.length+1);
+    memset(out, 0,s.length+1);
+    memcpy(out, s.items, s.length);
+    return out;
+}
+bool lookahead_matches(Str base, int start, Str delim){
+    if(start+delim.length>base.length){
+        return false;
+    }
+    for(int i=start; i<start+delim.length; i++){
+        if(base.items[i] != delim.items[i-start]){
 
+            return false;
+        }
+    }
+    return true;
+}
+StrVec str_split_by_delim(Arena * arena,Str base, Str delim){
+    StrVec out = make(arena, Str);
+    int start = 0;
+    for(int i =0; i<base.length; i++){
+        if(lookahead_matches(base, i, delim)){
+            if(i>start){
+                v_append(out, substring(base, start,i));
+            }
+            while(lookahead_matches(base, i, delim)){
+                v_append(out, substring(base,i, i+delim.length));
+                i += delim.length;
+            }
+            start = i;
+        }
+    }
+    if(base.length>start){
+        v_append(out, substring(base, start,base.length));
+    }
+    return out;
+}
+
+StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim){
+    StrVec out = make(arena, Str);
+    int start = 0;
+    for(int i =0; i<base.length; i++){
+        if(lookahead_matches(base, i, delim)){
+            if(i>start){
+                v_append(out, substring(base, start,i));
+            }
+            while(lookahead_matches(base, i, delim)){
+                i += delim.length;
+            }
+            start = i;
+        }
+    }
+    if(base.length>start){
+        v_append(out, substring(base, start,base.length));
+    }
+    return out;
+}
+
+int strlen_cmp(const void *  a,const void * b){
+    Str* s1 = (Str * )a;
+    Str* s2 = (Str * )b;
+    return s1->length>s2->length ? 1: s1->length<s2->length ? -1 : 0;
+}
+int strlen_cmp_reversed(const void *  a,const void * b){
+    Str* s2 = (Str * )a;
+    Str* s1 = (Str * )b;
+    return s1->length>s2->length ? 1: s1->length<s2->length ? -1 : 0;
+}
 /*
 String Stuff
 */

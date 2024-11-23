@@ -74,6 +74,12 @@ void test5(){
     v_append(delims, STR(" "));
     TokenVec tokens = tokenize_str(local, string_to_str(s), delims.items, 
     delims.length, STR("test.lisp"));
+    arena_destroy(local);
+}
+
+void test6(){
+    Arena * local = arena_create();
+
 }
 int main(int argc, const char ** argv){
     test3();
