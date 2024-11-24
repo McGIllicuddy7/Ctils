@@ -323,6 +323,7 @@ ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str
         }
     } 
     ListParserAstNode out = parse_tokens_to_list(arena,&(new_tokens.items), new_tokens.items+new_tokens.length, list_begin, list_end, seperator);
+    arena_destroy(local);
     return out;
 }
 #endif
