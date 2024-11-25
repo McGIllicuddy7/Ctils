@@ -17,10 +17,18 @@
 /*
 	Initial Defines
 */
+CTILS_STATIC
 void * debug_alloc(size_t count, size_t size);
+
+CTILS_STATIC
 void debug_global_free(void * ptr);
+
+CTILS_STATIC
 void *debug_realloc(void * ptr, size_t size);
+
+CTILS_STATIC
 void debug_alloc_and_global_free_counts();
+
 #ifndef global_alloc
 #define global_alloc(count,sz) debug_alloc(count, sz)
 #endif 
@@ -113,7 +121,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 #define make(arena, T) {0,0,0, arena}
 #define tmp_make(T) {0,0,0, &temporary_allocator}
 
-#define make_with_cap(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)cap, arena}
+#define make_with_cap(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
 #define tmp_make_with_cap(T, cap){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
 
 #define clone(vec, arena)(typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
@@ -640,7 +648,7 @@ long get_time_microseconds(){
 	return tv.tv_usec+tv.tv_sec*1000000;
 }
 
-CTILS_STATIC
+
 static long profile_time = 0;
 void begin_profile(){
 	if(profile_time == 0){
