@@ -55,6 +55,7 @@ typedef float f32;
 Memory stuff
 */
 
+CTILS_STATIC
 void mem_shift(void * start, size_t size, size_t count, size_t distance);
 /*
 Arena stuff 
@@ -67,13 +68,28 @@ typedef struct Arena{
     char* previous_allocation;
     struct Arena * next;
 } Arena;
+
+CTILS_STATIC
 Arena * arena_create();
+
+CTILS_STATIC
 void arena_destroy(Arena * arena);
+
+CTILS_STATIC
 void * arena_alloc(Arena * arena, size_t size);
+
+CTILS_STATIC
 void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size);
+
+CTILS_STATIC
 void arena_free(Arena * arena, void * ptr);
+
+CTILS_STATIC
 void arena_reset(Arena * arena);
+
 #define tmp_alloc(size) arena_alloc(&temporary_allocator, size);
+
+
 #define tmp_realloc(ptr,size, new_size) arena_realloc(&temporary_allocator, size, new_size)
 #define tmp_free(ptr) arena_free(&temporary_allocator, ptr)
 #define tmp_reset() arena_reset(&temporary_allocator)
@@ -87,6 +103,7 @@ Arena temporary_allocator = {};
 Slice stuff
 */
 
+CTILS_STATIC
 void * memdup(Arena * arena,void * ptr, size_t size);
 
 #define enable_vec_type(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
@@ -145,17 +162,29 @@ String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
 
+CTILS_STATIC
 String new_string(Arena * arena,const char* str);
+
 #define tmp_new_string(str) new_string(&temporary_allocator,str)
+
+CTILS_STATIC
 String new_string_wide(Arena * arena,const wchar_t* str);
+
+
 #define tmp_new_string_wide(str) new_string_wide(&temporary_allocator, str)
 
+CTILS_STATIC
 String string_format(Arena * arena, const char * fmt, ...);
 #define tmp_string_format(fmt...) string_format()
 
+CTILS_STATIC
 String string_random(Arena * arena, int minlen, int maxlen);
 #define tmp_string_random(min_len, max_len) string_random(&temporary_allocator, minlen, max_len)
+
+CTILS_STATIC
 void _strconcat(String * a, const char* b, size_t b_size);
+
+CTILS_STATIC
 bool string_equals(String a, String b);
 #define str_concat(a, b)\
 	_strconcat(&a,(const char *)b, sizeof(b[0]));
@@ -171,27 +200,59 @@ Str stuff
 */
 typedef struct {char * items; size_t length;}Str;
 enable_vec_type(Str);
+
+CTILS_STATIC
 Str string_to_str(String s);
+
+CTILS_STATIC
 String str_to_string(Arena * arena,Str s);
+
+CTILS_STATIC
 void put_str_ln(Str str);
 #define STR(st) (Str){(char*)st, (size_t)strlen(st)}
 #define substring(st, start, end)(Str){(char*)(st.items+start), (size_t)(end-start)}
+
+CTILS_STATIC
 char * str_to_c_string(Arena * arena, Str s);
+
+CTILS_STATIC
 StrVec str_split_by_delim(Arena * arena,Str base, Str delim);
+
+CTILS_STATIC
 StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim);
+
+CTILS_STATIC
 bool str_equals(Str a, Str b);
+
+CTILS_STATIC
 int strlen_cmp(const void* a, const void* b);
+
+CTILS_STATIC
 int strlen_cmp_reversed(const void* a, const void* b);
+
+CTILS_STATIC
 String string_indent(Arena * arena,String s, int depth);
 
 /*
 HashFunctions
 */
+
+CTILS_STATIC
 size_t hash_bytes(Byte * byte, size_t size);
+
+CTILS_STATIC
 size_t hash_int(int in);
+
+CTILS_STATIC
 size_t hash_float(float fl);
+
+CTILS_STATIC
 size_t hash_long(long lg);
+
+CTILS_STATIC
 size_t hash_double(double db);
+
+CTILS_STATIC
 size_t hash_string(String str);
 /*
 Hashtable
@@ -325,14 +386,32 @@ static void T##U##HashTable_unmake(T##U##HashTable * table){\
 /*
 Utils
 */
+
+CTILS_STATIC
 long get_time_microseconds();
+
+CTILS_STATIC
 void begin_profile();
+
+CTILS_STATIC
 long end_profile();
+
+CTILS_STATIC
 void end_profile_print(const char * message);
+
+CTILS_STATIC
 int execute(const char ** strings);
+
+CTILS_STATIC
 int execute_fd(int f_out, int f_in, int f_er, const char ** strings);
+
+CTILS_STATIC
 bool write_string_to_file(const char * s, const char * file_name);
+
+CTILS_STATIC
 String read_file_to_string(Arena * arena,const char * file_name);
+
+CTILS_STATIC
 bool is_number(char a);
 /*
  Noise functionality 
@@ -343,7 +422,11 @@ typedef struct{
     i64 v2;
     double scale_divisor;
 }NoiseOctave2d;
+
+CTILS_STATIC
 NoiseOctave2d noise_octave_2d_new(double scale_divisor);
+
+CTILS_STATIC
 f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase);
 
 /*

@@ -9,10 +9,20 @@ typedef struct{
     u8 start_col;
 }Token;
 enable_vec_type(Token);
+
+CTILS_STATIC
 bool token_equals(Token tok, Str str);
+
+CTILS_STATIC
 String token_print(Arena * arena,Token tok);
+
+CTILS_STATIC
 StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count);
+
+CTILS_STATIC
 TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, Str file);
+
+CTILS_STATIC
 bool is_numbers(Str str);
 
 typedef enum {
@@ -35,8 +45,14 @@ typedef struct ListParserAstNode{
     };
 }ListParserAstNode;
 enable_vec_type(ListParserAstNode);
+
+CTILS_STATIC
 String list_parser_ast_node_print(Arena * arena,ListParserAstNode list);
+
+CTILS_STATIC
 ListParserAstNode parse_tokens_to_list(Arena * arena, Token **tokens, Token * tokens_end, Str list_begin, Str list_end, Str seperator);
+
+CTILS_STATIC
 ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str list_end, Str seperator, Str file_name);
 #ifdef CTILS_IMPLEMENTATION 
 
