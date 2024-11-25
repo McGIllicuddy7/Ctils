@@ -1,5 +1,8 @@
 #pragma once
 //use #define CTILS_IMPLEMENTATION
+#ifndef CTILS_STATIC
+#define CTILS_STATIC
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -351,20 +354,28 @@ Implementation
 #include <unistd.h>
 static int alloc_count = 0;
 static int global_free_count =0;
+
+CTILS_STATIC
 void * debug_alloc(size_t count, size_t size){
 	alloc_count++;
 	return calloc(count, size);
 }
+
+CTILS_STATIC
 void debug_global_free(void * ptr){
 	global_free_count++;
 	free(ptr);
 }
+
+CTILS_STATIC
 void *debug_realloc(void * ptr, size_t size){
     if(!ptr){
         alloc_count++;
     }
     return realloc(ptr, size);
 }
+
+CTILS_STATIC
 void debug_alloc_and_global_free_counts(){
 	printf("alloc count: %d, global_free_count: %d\n", alloc_count, global_free_count);
 }
@@ -372,6 +383,7 @@ void debug_alloc_and_global_free_counts(){
 Memory Stuff
 */
 
+CTILS_STATIC
 void mem_shift(void * start, size_t size, size_t count, size_t distance){
 	char * data = (char *)start;
 	for(int j = 0; j<size*distance; j++){
@@ -380,6 +392,8 @@ void mem_shift(void * start, size_t size, size_t count, size_t distance){
 		}
 	}
 }
+
+CTILS_STATIC
 void * memdup(Arena* arena, void * ptr, size_t size){
 	if(!ptr){
 		return 0;
@@ -392,6 +406,7 @@ void * memdup(Arena* arena, void * ptr, size_t size){
 /*
 Arena stuff
 */
+CTILS_STATIC
 Arena * arena_create(){
     char * buffer = (char *)global_alloc(1,4096*8);
     char * next_ptr = buffer;
@@ -402,6 +417,8 @@ Arena * arena_create(){
     *out = (Arena){buffer, next_ptr, end, previous_allocation, next};
     return out;
 }
+
+CTILS_STATIC
 Arena * arena_create_sized(size_t reqsize){
     size_t size = 4096;
     while(size<=reqsize){
@@ -416,6 +433,8 @@ Arena * arena_create_sized(size_t reqsize){
     *out = (Arena){buffer, next_ptr, end, previous_allocation, next};
     return out;
 }
+
+CTILS_STATIC
 void arena_destroy(Arena * arena){
     if (arena == 0){
         return;
@@ -424,6 +443,8 @@ void arena_destroy(Arena * arena){
     arena_destroy(arena->next);
     global_free(arena);
 }
+
+CTILS_STATIC
 void * arena_alloc(Arena * arena, size_t size){
     if(!arena){
         return global_alloc(1,size);
@@ -444,6 +465,7 @@ void * arena_alloc(Arena * arena, size_t size){
     arena->previous_allocation = previous;
     return previous;
 }
+CTILS_STATIC
 void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new_size){
     if(!arena){
         return global_realloc(ptr,new_size);
@@ -456,11 +478,15 @@ void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new
     memmove(out, ptr, previous_size);
     return out;
 }
+
+CTILS_STATIC
 void arena_reset(Arena * arena){
     arena_destroy(arena->next);
     arena->next_ptr= arena->buffer;
     arena->previous_allocation = 0;
 }
+
+CTILS_STATIC
 void arena_free(Arena * arena, void * ptr){
     if(!arena){
         global_free(ptr);
@@ -470,6 +496,7 @@ void arena_free(Arena * arena, void * ptr){
 Hashing
 */
 
+CTILS_STATIC
 size_t hash_bytes(Byte * bytes, size_t size){
 	size_t out = 0;
 	const size_t pmlt = 31;
@@ -480,22 +507,32 @@ size_t hash_bytes(Byte * bytes, size_t size){
 	}
 	return out;
 }
+
+CTILS_STATIC
 size_t hash_int(int in){
 	int tmp = in;
 	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
+
+CTILS_STATIC
 size_t hash_float(float fl){
 	float tmp = fl;
 	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
+
+CTILS_STATIC
 size_t hash_long(long lg){
 	long tmp = lg;
 	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
+
+CTILS_STATIC
 size_t hash_double(double db){
 	double tmp = db;
 	return hash_bytes((Byte *)&tmp, sizeof(tmp));
 }
+
+CTILS_STATIC
 size_t hash_string(String str){
 	size_t out = 0;
 	const size_t pmlt = 31;
@@ -512,17 +549,23 @@ Utils
 #ifdef __linux__
 int fileno(FILE * file);
 #endif
+
+CTILS_STATIC
 long get_time_microseconds(){
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
 	return tv.tv_usec+tv.tv_sec*1000000;
 }
+
+CTILS_STATIC
 static long profile_time = 0;
 void begin_profile(){
 	if(profile_time == 0){
 		profile_time = get_time_microseconds();
 	}
 }
+
+CTILS_STATIC
 long end_profile(){
 	if(profile_time != 0){
 		long out =  get_time_microseconds()-profile_time;
@@ -531,9 +574,13 @@ long end_profile(){
 	}
 	return -1;
 }
+
+CTILS_STATIC
 void end_profile_print(const char * message){
 	printf("%s took %f seconds\n",message, ((double)end_profile())/1000000);
 }
+
+CTILS_STATIC
 int execute(const char ** strings){
     if(strings == nil){
         return 1;
@@ -550,6 +597,8 @@ int execute(const char ** strings){
     }
     return 1;
 }
+
+CTILS_STATIC
 int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
     if(strings == nil){
         return 1;
@@ -572,15 +621,21 @@ int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
 /* 
 Str stuff
 */
+
+CTILS_STATIC
 Str string_to_str(String s){
     return (Str){s.items, s.length};
 }
+
+CTILS_STATIC
 String str_to_string(Arena * arena,Str s){
     char * out = (char*)arena_alloc(arena, s.length+1);
     memset(out, 0,s.length+1);
     memcpy(out, s.items, s.length);
     return (String){out, s.length, s.length, arena};
 }
+
+CTILS_STATIC
 bool str_equals(Str a, Str b){
     if(a.length != b.length){
         return 0;
@@ -592,6 +647,8 @@ bool str_equals(Str a, Str b){
     }
     return true;
 }
+
+CTILS_STATIC
 void put_str_ln(Str str){
     printf("<");
     assert(str.length >0);
@@ -600,12 +657,16 @@ void put_str_ln(Str str){
     }
     printf(">\n");
 }
+
+CTILS_STATIC
 char * str_to_c_string(Arena * arena, Str s){
     char * out = (char*)arena_alloc(arena, s.length+1);
     memset(out, 0,s.length+1);
     memcpy(out, s.items, s.length);
     return out;
 }
+
+CTILS_STATIC
 bool lookahead_matches(Str base, int start, Str delim){
     if(start+delim.length>base.length){
         return false;
@@ -617,7 +678,10 @@ bool lookahead_matches(Str base, int start, Str delim){
         }
     }
     return true;
+
 }
+
+CTILS_STATIC
 StrVec str_split_by_delim(Arena * arena,Str base, Str delim){
     StrVec out = make(arena, Str);
     int start = 0;
@@ -639,6 +703,7 @@ StrVec str_split_by_delim(Arena * arena,Str base, Str delim){
     return out;
 }
 
+CTILS_STATIC
 StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim){
     StrVec out = make(arena, Str);
     int start = 0;
@@ -659,11 +724,14 @@ StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim){
     return out;
 }
 
+CTILS_STATIC
 int strlen_cmp(const void *  a,const void * b){
     Str* s1 = (Str * )a;
     Str* s2 = (Str * )b;
     return s1->length>s2->length ? 1: s1->length<s2->length ? -1 : 0;
 }
+
+CTILS_STATIC
 int strlen_cmp_reversed(const void *  a,const void * b){
     Str* s2 = (Str * )a;
     Str* s1 = (Str * )b;
@@ -674,6 +742,8 @@ String Stuff
 */
 #include <stdarg.h>
 bool string_equals(String a, String b);
+
+CTILS_STATIC
 String new_string(Arena * arena,const char* str){
 	int l = strlen(str)+1;
     String out = make_with_cap(arena,str_type,l);
@@ -683,6 +753,8 @@ String new_string(Arena * arena,const char* str){
 	v_append(out, '\0');
 	return out;
 }
+
+CTILS_STATIC
 String new_string_wide(Arena * arena,const wchar_t* str){
     int l = wcslen(str);
 	String out = make_with_cap(arena,str_type, l);
@@ -692,6 +764,8 @@ String new_string_wide(Arena * arena,const wchar_t* str){
 	v_append(out, '\0');
 	return out;
 }
+
+CTILS_STATIC
 void _strconcat(String * a, const char* b, size_t b_size){
 	if(sizeof(str_type) == 1){
         int l = (*a).length-2;
@@ -724,6 +798,8 @@ void _strconcat(String * a, const char* b, size_t b_size){
 		}
 	}
 }
+
+CTILS_STATIC
 String string_format(Arena *arena,const char * fmt, ...){
 	String s =new_string(arena,"");
 	va_list args;
@@ -789,6 +865,8 @@ String string_format(Arena *arena,const char * fmt, ...){
 	va_end(args);
 	return s;
 }
+
+CTILS_STATIC
 bool string_equals(String a, String b){
 	if(len(a) != len(b)){
 		return 0;
@@ -800,6 +878,8 @@ bool string_equals(String a, String b){
 	}
 	return 1;
 }
+
+CTILS_STATIC
 String string_random(Arena * arena,int minlen, int maxlen){
 	int length = rand()%(maxlen-minlen)+minlen;
 	String out = make_with_cap(arena,str_type, length+1);
@@ -821,6 +901,8 @@ String string_random(Arena * arena,int minlen, int maxlen){
 /*
 IO FUNCTIONALITY
 */
+
+CTILS_STATIC
 bool write_string_to_file(const char * s, const char * file_name){
 	FILE * f = fopen(file_name, "w");
 	if(f == 0){
@@ -831,6 +913,8 @@ bool write_string_to_file(const char * s, const char * file_name){
 	fclose(f);
 	return size == w_size;
 }
+
+CTILS_STATIC
 String read_file_to_string(Arena * arena, const char *file_name){
 	FILE *f= fopen(file_name, "rb");
 	if (!f){
@@ -847,6 +931,8 @@ String read_file_to_string(Arena * arena, const char *file_name){
 	out.items[fsize]= 0;
 	return out;
 }
+
+CTILS_STATIC
 bool is_number(char a){
 	return a == '0' || a == '1' || a == '2' || a == '3' || a == '4' || a == '5' || a == '6' || a == '7' || a == '8' || a == '9';
 }
@@ -854,10 +940,13 @@ bool is_number(char a){
  Noise stuff 
  */
 typedef struct{double x; double y;} float2;
+
+CTILS_STATIC
 f64 interpolate(f64 a, f64 b, f64 s){
     return a*(1-s)+b*s;
 }
 
+CTILS_STATIC
 NoiseOctave2d noise_octave_2d_new(double scale_divisor){
         i64 v0 = rand()%1000000000;
         i64 v1 = rand()%1000000000;
@@ -865,6 +954,7 @@ NoiseOctave2d noise_octave_2d_new(double scale_divisor){
         return (NoiseOctave2d){v0,v1,v2,scale_divisor};
 }
 
+CTILS_STATIC
 float2 random_gradient(NoiseOctave2d * self, i32 x, i32 y) {
         i64 w = 64;
         i64 s = w / 2;
@@ -880,6 +970,7 @@ float2 random_gradient(NoiseOctave2d * self, i32 x, i32 y) {
         //return self.points[y as usize % self.points.len()][x as usize % self.points.len()];
 }
 
+CTILS_STATIC
 f64 dot_grid_gradient(NoiseOctave2d * self, i32 ix, i32 iy, f64 x, f64 y){
     float2 gradient = random_gradient(self,ix, iy);
     f64 dx = x - (f64)ix;
@@ -887,6 +978,7 @@ f64 dot_grid_gradient(NoiseOctave2d * self, i32 ix, i32 iy, f64 x, f64 y){
     return (dx * gradient.x + dy * gradient.y);
 }
 
+CTILS_STATIC
 f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase){
     f64 x = xbase / 16.0;
     f64 y = ybase / 16.0;

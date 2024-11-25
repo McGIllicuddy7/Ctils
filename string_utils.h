@@ -40,6 +40,7 @@ ListParserAstNode parse_tokens_to_list(Arena * arena, Token **tokens, Token * to
 ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str list_end, Str seperator, Str file_name);
 #ifdef CTILS_IMPLEMENTATION 
 
+CTILS_STATIC
 bool token_equals(Token tok, Str str){
     return str_equals(tok.str, str);
 }
@@ -51,6 +52,8 @@ typedef struct{
     bool finalized;
 } CTILS_InternalToken;
 enable_vec_type(CTILS_InternalToken);
+
+CTILS_STATIC
 StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_count){
     Arena * local = arena_create();
     TokenVec vec= tokenize_str(local, base, delims, delims_count, STR(""));
@@ -61,6 +64,8 @@ StrVec tokenize_str_no_info(Arena * arena, Str base, Str * delims, int delims_co
     arena_destroy(local);
     return out;
 }
+
+CTILS_STATIC
 TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, Str file_name){
     Arena * local = arena_create();
     CTILS_InternalTokenVec tokens = make(local, CTILS_InternalToken);
@@ -198,6 +203,8 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
     arena_destroy(local);
     return out;
 }
+
+CTILS_STATIC
 bool is_numbers(Str str){
     bool hit_point = false;
     if(str.length <1){
@@ -223,6 +230,7 @@ bool is_numbers(Str str){
     return true;
 }
 
+CTILS_STATIC
 String string_indent(Arena * arena,String s, int depth){
     String out = make(arena, String);
     if(s.length>0){    
@@ -245,11 +253,13 @@ String string_indent(Arena * arena,String s, int depth){
     return out;
 }
 
+CTILS_STATIC
 String token_print(Arena * arena,Token tok){
     String out = string_format(arena, "token{    file name:%s;\n    line:%d;\n    start collumn:%d;\n    string:%s;\n}", str_to_c_string(arena,tok.file_name), tok.line, tok.start_col,str_to_c_string(arena,tok.str));
     return out;
 }
 
+CTILS_STATIC
 String list_parser_ast_node_print(Arena * arena,ListParserAstNode list){
     Arena * local = arena_create();
     String out = new_string(arena,"");
@@ -274,6 +284,7 @@ String list_parser_ast_node_print(Arena * arena,ListParserAstNode list){
     return out;
 }
 
+CTILS_STATIC
 ListParserAstNode parse_tokens_to_list(Arena * arena, Token **tokens, Token * tokens_end, Str list_begin, Str list_end, Str seperator){
     size_t sz = sizeof(ListParserAstNode);
     ListParserAstNode out = {};
@@ -298,6 +309,8 @@ ListParserAstNode parse_tokens_to_list(Arena * arena, Token **tokens, Token * to
     }
     return out;
 }
+
+CTILS_STATIC
 ListParserAstNode parse_str_to_list(Arena * arena, Str base, Str list_begin, Str list_end, Str seperator, Str file_name){
     Arena * local = arena_create();
     bool is_white_space = str_equals(seperator, STR(" "));
