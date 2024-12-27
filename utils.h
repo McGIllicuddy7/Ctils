@@ -127,7 +127,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 #define tmp_make_with_cap(T, cap){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
 
 #define clone(vec, arena)(typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
-#define v_copy_into()
+
 #define v_swap(a, b) {typeof(a) v_swap_temporary_value = a; a =b; b = v_swap_temporary_value;}
 #define v_append(vec, value)\
  {if(vec.capacity<vec.length+1){\
@@ -136,7 +136,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
     } \
     vec.items[vec.length++] = value;}
 
-#define unmake(vec) arena_free((vec).arena,(vec).items); 
+#define unmake(vec) arena_free((vec).arena,(vec).items) 
 
 #define v_append_slice(vec, other_items, other_len)\
  {if(vec.capacity<vec.length+other_len){\
