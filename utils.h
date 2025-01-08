@@ -15,6 +15,9 @@
 #include <stdint.h>
 #include <math.h>
 #include <pthread.h>
+#include <signal.h>
+#define true 1 
+#define false 0
 /*
 	Initial Defines
 */
@@ -43,6 +46,8 @@ void debug_alloc_and_global_free_counts();
 #define str_type char
 #endif
 #define nil 0
+
+#define todo(...) {fprintf(stderr, "todo " __VA_OPT__("%s ")"line:%d, file:%s""\n",__VA_ARGS__ __VA_OPT__(,)__LINE__, __FILE__ ); raise(SIGINT);}
 typedef unsigned char Byte;
 typedef int8_t i8;
 typedef int16_t i16;
@@ -103,6 +108,7 @@ void arena_reset(Arena * arena);
 #define tmp_realloc(ptr,size, new_size) arena_realloc(&temporary_allocator, size, new_size)
 #define tmp_free(ptr) arena_free(&temporary_allocator, ptr)
 #define tmp_reset() arena_reset(&temporary_allocator)
+#define tmp_init() temporary_allocator = *arena_create()
 #ifndef CTILS_IMPLEMENTATION
 extern Arena temporary_allocator;
 #endif
@@ -118,23 +124,43 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 
 #define enable_vec_type(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
 
+enable_vec_type(void);
+enable_vec_type(Byte);
+enable_vec_type(i8);
+enable_vec_type(i16);
+enable_vec_type(i32);
+enable_vec_type(i64);
+enable_vec_type(i128);
+enable_vec_type(u8);
+enable_vec_type(u16);
+enable_vec_type(u32);
+enable_vec_type(u64);
+enable_vec_type(u128);
+enable_vec_type(f32);
+enable_vec_type(f64);
 
-
-#define make(arena, T) {0,0,0, arena}
-#define tmp_make(T) {0,0,0, &temporary_allocator}
+voidVec make_static_vec(Arena * arena, void * args,size_t obj_size, size_t count);
+#define make(arena, T) (T##Vec){0,0,0, arena}
+#define tmp_make(T) (T##Vec){0,0,0, &temporary_allocator}
 
 #define make_with_cap(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
 #define tmp_make_with_cap(T, cap){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
+
+#define make_static(in_arena, T, args...)
 
 #define clone(vec, arena)(typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 
 #define v_swap(a, b) {typeof(a) v_swap_temporary_value = a; a =b; b = v_swap_temporary_value;}
 #define v_append(vec, value)\
- {if(vec.capacity<vec.length+1){\
-    if (vec.capacity != 0){ vec.items =(typeof(vec.items))arena_realloc(vec.arena,vec.items,vec.capacity*sizeof(vec.items[0]), vec.capacity*sizeof(vec.items[0])*2);vec.capacity *= 2;}\
-     else{vec.capacity = 1;vec.items = (typeof(vec.items))arena_realloc(vec.arena, vec.items, 0, 1*sizeof(vec.items[0]));}\
-    } \
-    vec.items[vec.length++] = value;}
+ {if((vec).capacity<=(vec).length+1){\
+    if ((vec).capacity != 0){\
+	(vec).items =(typeof((vec).items))arena_realloc((vec).arena,(vec).items,(vec).capacity*sizeof((vec).items[0]), (vec).capacity*sizeof((vec).items[0])*2);(vec).capacity *= 2;}\
+     else{\
+		(vec).capacity = 16;\
+		(vec).items = (typeof((vec).items))arena_alloc((vec).arena, 16*sizeof((vec).items[0]));\
+		}\
+	 \
+  }   (vec).items[(vec).length] = value; (&(vec))->length+= 1;}
 
 #define unmake(vec) arena_free((vec).arena,(vec).items) 
 
@@ -166,6 +192,8 @@ while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{v
 vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 
 #define len(vec) (vec).length
+
+#define unmake_fn(vec, fn) for(int i =0; i<vec.length; i++){fn(vec.items[i]);} unmake(vec)
 ;
 /*
 String stuff
@@ -389,6 +417,17 @@ static void T##U##HashTable_unmake(T##U##HashTable * table){\
 	global_free(table->Table);\
 	global_free(table);\
 }\
+static void T##U##HashTable_unmake_funcs(T##U##HashTable * table,void (*not_key)(T * key), void (*not_value)(U * value)){\
+	for(int i =0; i<table->TableSize; i++){\
+		for(int j =0; j<table->Table[i].length; j++){\
+			if(not_key){not_key(&table->Table[i].items[j].key);}\
+			if(not_value){not_value(&table->Table[i].items[j].value);}\
+		}\
+		unmake(table->Table[i]);\
+	}\
+	global_free(table->Table);\
+	global_free(table);\
+}\
 
 
 
@@ -422,6 +461,12 @@ CTILS_STATIC
 String read_file_to_string(Arena * arena,const char * file_name);
 
 CTILS_STATIC
+bool write_bytes_to_file(ByteVec bytes, const char * file_name);
+
+CTILS_STATIC
+ByteVec read_file_to_bytes(Arena * arena, const char *file_name);
+
+CTILS_STATIC
 bool is_number(char a);
 /*
  Noise functionality 
@@ -450,6 +495,11 @@ typedef struct {\
 }Option##T;
 #define Some(v) {true,v}
 #define None {false}
+
+
+typedef struct Unit{
+}Unit;
+
 /*
 Implementation
 */
@@ -588,7 +638,9 @@ void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new
     if (arena->previous_allocation == ptr && ptr){
         arena->next_ptr = (char*)ptr;
     }
+	pthread_mutex_unlock(&arena->lock);
     void * out = arena_alloc(arena, new_size);
+	pthread_mutex_lock(&arena->lock);
     memmove(out, ptr, previous_size);
 	pthread_mutex_unlock(&arena->lock);
     return out;
@@ -598,6 +650,7 @@ CTILS_STATIC
 void arena_reset(Arena * arena){
 	pthread_mutex_lock(&arena->lock);
     arena_destroy(arena->next);
+	arena->next = 0;
     arena->next_ptr= arena->buffer;
     arena->previous_allocation = 0;
 	pthread_mutex_unlock(&arena->lock);
@@ -1050,6 +1103,35 @@ String read_file_to_string(Arena * arena, const char *file_name){
 }
 
 CTILS_STATIC
+bool write_bytes_to_file(ByteVec bytes, const char * file_name){
+	FILE * f = fopen(file_name, "w");
+	if(f == 0){
+		return 0;
+	}
+	size_t size = bytes.length;
+	size_t w_size = fwrite(bytes.items, 1,size, f);
+	fclose(f);
+	return size == w_size;
+}
+
+CTILS_STATIC
+ByteVec read_file_to_bytes(Arena * arena, const char *file_name){
+	FILE *f= fopen(file_name, "rb");
+	if (!f){
+		perror("ERROR:");
+		exit(1);
+	}
+	fseek(f, 0, SEEK_END);
+	size_t fsize = ftell(f);
+	fseek(f, 0, SEEK_SET); 
+	String out = new_string(arena,"");
+	v_resize(out, fsize);
+	fread(out.items, 1, fsize, f);
+	fclose(f);
+	return (ByteVec){.items = (Byte *)out.items, .length = out.length, .capacity = out.capacity, .arena = out.arena};
+}
+
+CTILS_STATIC
 bool is_number(char a){
 	return a == '0' || a == '1' || a == '2' || a == '3' || a == '4' || a == '5' || a == '6' || a == '7' || a == '8' || a == '9';
 }
@@ -1114,4 +1196,5 @@ f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase){
     f64 value = interpolate(ix0, ix1, sy);
     return value;
 }
+
 #endif

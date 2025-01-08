@@ -21,15 +21,8 @@ make_lambda_type(int, int);
 void test(){
     fn_void test = lambda(testing123);
     call(test);
-    test = tmp_lambda(testing12,{"help uwu"});
+    test = tmp_lambda(testing12,{"abcdefghijklmnopqrstuvwxyz"});
     call(test);
-    Arena * local =arena_create();
-    Str delimns[] = {STR("+"), STR("-"), STR("*"),STR("/"),STR("<"), STR(">"), STR("#"), STR("->"), STR("("), STR(")"),STR("()") ,STR(","), STR("{"), STR("}"), STR(";"), STR("="), STR("==")};
-    StrVec dels = tokenize_str_no_info(local, string_to_str(read_file_to_string(local, "main.c")), delimns, sizeof(delimns)/sizeof(Str));
-    for(int i =0; i<dels.length; i++){
-        put_str_ln(dels.items[i]);
-    }
-    arena_destroy(local);
 }   
 
 void hash_test(){
@@ -79,9 +72,26 @@ void test5(){
 
 void test6(){
     Arena * local = arena_create();
+    u32Vec a = make(local, u32);
+    u32Vec b = make(local, u32);
+    const int cap = 10;
+    for(int i =0; i<cap; i++){
+        if(rand()%2){
+        v_append(a, i*2);
+        } else{
+            v_append(b,i*2+1);
+        }
 
+    }
+    for(int i =0; i<a.length; i++){
+        printf("%d,",a.items[i]);
+    }
+    printf("\n");
+    for(int i =0; i<b.length; i++){
+        printf("%d,",b.items[i]);
+    }
 }
 int main(int argc, const char ** argv){
-    test3();
+    test6();
     return 0;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "utils.h"
-
+#define true 1 
+#define false 0
 
 typedef struct{
     Str str;
@@ -180,7 +181,7 @@ TokenVec tokenize_str(Arena * arena, Str base, Str * delims, int delims_count, S
         }
         arena_destroy(temps);
     }
-    CTILS_InternalTokenVec tmp = make(local, Token);
+    CTILS_InternalTokenVec tmp = make(local, CTILS_InternalToken);
     for(int i =0; i<tokens.length; i++){
         if(str_equals(tokens.items[i].str, STR("\""))){
             int start = i;
@@ -248,7 +249,7 @@ bool is_numbers(Str str){
 
 CTILS_STATIC
 String string_indent(Arena * arena,String s, int depth){
-    String out = make(arena, String);
+    String out = new_string(arena, "");
     if(s.length>0){    
         for(int i =0; i<depth; i++){
             str_v_append(out, ' ');
