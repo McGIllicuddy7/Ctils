@@ -21,6 +21,8 @@
 /*
 	Initial Defines
 */
+#define STRINGIFY1(S) #S 
+#define STRINGIFY(S) STRINGIFY1(S)
 CTILS_STATIC
 void * debug_alloc(size_t count, size_t size);
 
@@ -61,6 +63,8 @@ typedef uint64_t u64;
 typedef __uint128_t u128;
 typedef double f64;
 typedef float f32;
+typedef char * cstr;
+typedef void * void_ptr;
 #ifdef __cplusplus
 #include <type_traits>
 #define typeof(T) decltype(T)
@@ -82,10 +86,15 @@ typedef struct Arena{
     char*end;
     char* previous_allocation;
     struct Arena * next;
+	void * defer_queue;
 } Arena;
 
 CTILS_STATIC
 Arena * arena_create();
+
+void arena_destroy_thunk(Arena **);
+#define new_arena(name) __attribute__((cleanup(arena_destroy_thunk))) Arena * name; name = arena_create()
+
 
 CTILS_STATIC
 void arena_destroy(Arena * arena);
@@ -101,6 +110,9 @@ void arena_free(Arena * arena, void * ptr);
 
 CTILS_STATIC
 void arena_reset(Arena * arena);
+
+CTILS_STATIC 
+void defer(Arena * arena, void (*func)(void*),void * data);
 
 #define tmp_alloc(size) arena_alloc(&temporary_allocator, size);
 
@@ -138,13 +150,14 @@ enable_vec_type(u64);
 enable_vec_type(u128);
 enable_vec_type(f32);
 enable_vec_type(f64);
+enable_vec_type(cstr);
+enable_vec_type(void_ptr);
 
-voidVec make_static_vec(Arena * arena, void * args,size_t obj_size, size_t count);
 #define make(arena, T) (T##Vec){0,0,0, arena}
 #define tmp_make(T) (T##Vec){0,0,0, &temporary_allocator}
 
-#define make_with_cap(arena, T, cap){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
-#define tmp_make_with_cap(T, cap){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
+#define make_with_cap(arena, T, cap) (T##Vec){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
+#define tmp_make_with_cap(T, cap) (T##Vec){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
 
 #define make_static(in_arena, T, args...)
 
@@ -199,7 +212,7 @@ vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,v
 String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
-
+enable_vec_type(String);
 CTILS_STATIC
 String new_string(Arena * arena,const char* str);
 
@@ -503,8 +516,11 @@ typedef struct Unit{
 /*
 Implementation
 */
-
 #ifdef CTILS_IMPLEMENTATION 
+#ifdef ARENA_REGISTER
+void register_arena(Arena * arena);
+void deregister_arena(Arena * arena);
+#endif
 #include <unistd.h>
 static int alloc_count = 0;
 static int global_free_count =0;
@@ -560,6 +576,29 @@ void * memdup(Arena* arena, void * ptr, size_t size){
 /*
 Arena stuff
 */
+
+CTILS_STATIC
+void arena_destroy_thunk(Arena **arena){
+	arena_destroy(*arena);
+}
+
+typedef struct arena_defer{
+	void (*func)(void *);
+	void * data;
+	struct arena_defer * next;
+}arena_defer;
+
+CTILS_STATIC 
+void defer(Arena * arena, void(*func)(void *), void * data){
+	if(!arena){
+		return;
+	}
+	arena_defer * def = arena_alloc(arena, sizeof(arena_defer));
+	def->next = arena->defer_queue;
+	def->func = func;
+	def->data = data;
+	arena->defer_queue =def;
+}
 CTILS_STATIC
 Arena * arena_create(){
     char * buffer = (char *)global_alloc(1,4096*8);
@@ -571,6 +610,9 @@ Arena * arena_create(){
 	pthread_mutex_t lck;
 	pthread_mutex_init(&lck,0);
     *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next};
+	#ifdef ARENA_REGISTER
+	register_arena(out);
+	#endif
     return out;
 }
 
@@ -589,6 +631,9 @@ Arena * arena_create_sized(size_t reqsize){
 	pthread_mutex_init(&lck,0);
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
     *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next};
+	#ifdef ARENA_REGISTER
+	register_arena(out);
+	#endif
     return out;
 }
 
@@ -597,6 +642,15 @@ void arena_destroy(Arena * arena){
     if (arena == 0){
         return;
     }
+	while(arena->defer_queue){
+		arena_defer *def = arena->defer_queue;
+		def->func(def->data);
+		arena->defer_queue = def->next;
+		
+	}
+	#ifdef ARENA_REGISTER
+	deregister_arena(arena);
+	#endif
     global_free(arena->buffer);
     arena_destroy(arena->next);
 	pthread_mutex_destroy(&arena->lock);
@@ -916,7 +970,11 @@ bool string_equals(String a, String b);
 CTILS_STATIC
 String new_string(Arena * arena,const char* str){
 	int l = strlen(str)+1;
-    String out = make_with_cap(arena,str_type,l);
+    String out;
+	out.items = arena_alloc(arena, l*sizeof(str_type));
+	out.length =0; 
+	out.capacity = l;
+	out.arena = arena;
 	for(int i = 0; i<l; i++){
 		v_append(out, (str_type)str[i]);
 	}
@@ -927,7 +985,11 @@ String new_string(Arena * arena,const char* str){
 CTILS_STATIC
 String new_string_wide(Arena * arena,const wchar_t* str){
     int l = wcslen(str);
-	String out = make_with_cap(arena,str_type, l);
+	String out;
+	out.items = arena_alloc(arena, l*sizeof(str_type));
+	out.length =0; 
+	out.capacity = l;
+	out.arena = arena;
 	for(int i = 0; i<l; i++){
 		v_append(out, (str_type)str[i]);
 	}
@@ -1052,7 +1114,11 @@ bool string_equals(String a, String b){
 CTILS_STATIC
 String string_random(Arena * arena,int minlen, int maxlen){
 	int length = rand()%(maxlen-minlen)+minlen;
-	String out = make_with_cap(arena,str_type, length+1);
+	String out;
+	out.items = arena_alloc(arena,(length+1)*sizeof(str_type));
+	out.length =0; 
+	out.capacity = length+1;
+	out.arena = arena;
 	for(int i= 0; i<length+1; i++){
 		out.items[i] = 0;
 	}
