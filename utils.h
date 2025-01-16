@@ -284,6 +284,8 @@ int strlen_cmp_reversed(const void* a, const void* b);
 CTILS_STATIC
 String string_indent(Arena * arena,String s, int depth);
 
+CTILS_STATIC
+void unmake_string(String * f);
 /*
 HashFunctions
 */
@@ -305,6 +307,8 @@ size_t hash_double(double db);
 
 CTILS_STATIC
 size_t hash_string(String str);
+CTILS_STATIC
+size_t hash_cstring(const char * str);
 /*
 Hashtable
 */
@@ -442,8 +446,7 @@ static void T##U##HashTable_unmake_funcs(T##U##HashTable * table,void (*not_key)
 	global_free(table);\
 }\
 
-
-
+enable_hash_type(void_ptr, void_ptr);
 
 /*
 Utils
@@ -481,6 +484,8 @@ ByteVec read_file_to_bytes(Arena * arena, const char *file_name);
 
 CTILS_STATIC
 bool is_number(char a);
+CTILS_STATIC;
+void no_op_void(void*);
 /*
  Noise functionality 
 */
@@ -497,7 +502,6 @@ NoiseOctave2d noise_octave_2d_new(double scale_divisor);
 CTILS_STATIC
 f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase);
 
-
 /*
 Option
 */
@@ -512,7 +516,33 @@ typedef struct {\
 
 typedef struct Unit{
 }Unit;
+/*
+Iterators
+*/
+typedef struct Iterator{
+    void * data;
+    size_t idx;
+    size_t end;
+    size_t stride;
+    size_t value_offset;
+    void *(*next)(struct Iterator*);
+}Iterator;
+#define NEXT(It) (It.next(&It))
+#define ITER_VEC(v) make_vec_iterator(*(voidVec*)(&v), sizeof(v.items[0]))
+#define ITER_HASHTABLE(v) make_hash_map_iter(v, sizeof(v->Table[0].items[0]), __offsetof(typeof(*(v->Table->items)), value))
+#define ITER_HASHTABLE_KV(v) make_hash_map_iter(v, sizeof(v->Table[0].items[0]), 0)
 
+CTILS_STATIC
+void * next_vec_iter(Iterator * iter);
+
+CTILS_STATIC
+Iterator make_vec_iterator(voidVec v,size_t stride);
+
+CTILS_STATIC
+void * next_hash_map_iter(Iterator * iter);
+
+CTILS_STATIC
+Iterator make_hash_map_iter(void * v, size_t stride, size_t offset);
 /*
 Implementation
 */
@@ -764,6 +794,19 @@ size_t hash_string(String str){
 	for(int i =0; i<len(str);i++){
 		out += str.items[i]*mlt;
 		mlt*=pmlt;
+	}
+	return out;
+}
+CTILS_STATIC
+size_t hash_cstring(const char * str){
+	size_t out = 0;
+	const size_t pmlt = 31;
+	size_t mlt = 31;
+	int i =0; 
+	while(str[i] != 0){
+		out += str[i]*mlt;
+		mlt*=pmlt;
+		i++;
 	}
 	return out;
 }
@@ -1134,6 +1177,11 @@ String string_random(Arena * arena,int minlen, int maxlen){
 	return out;
 }
 
+CTILS_STATIC
+void unmake_string(String * f){
+	unmake(*f);
+}
+
 /*
 IO FUNCTIONALITY
 */
@@ -1201,6 +1249,10 @@ CTILS_STATIC
 bool is_number(char a){
 	return a == '0' || a == '1' || a == '2' || a == '3' || a == '4' || a == '5' || a == '6' || a == '7' || a == '8' || a == '9';
 }
+CTILS_STATIC
+void no_op_void(void*){
+
+}
 /*
  Noise stuff 
  */
@@ -1262,5 +1314,71 @@ f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase){
     f64 value = interpolate(ix0, ix1, sy);
     return value;
 }
+/*
+Iterators
+*/
+CTILS_STATIC
+void * next_vec_iter(Iterator * iter){
+    if(iter->idx == iter->end){
+        return 0;
+    }
+    else{
+        void * nxt = iter->data+iter->idx*iter->stride;
+        iter->idx += 1;
+        return nxt;
+    }
+}
 
+CTILS_STATIC
+Iterator make_vec_iterator(voidVec v,size_t stride){
+    Iterator out = {};
+    out.data = v.items;
+    out.end = v.length;
+    out.idx =0;
+    out.stride = stride;
+    out.next= next_vec_iter;
+    return out;
+}
+
+CTILS_STATIC
+//typedef struct{ KeyValuePairVec *Table; 
+//size_t TableSize; size_t (*hash_func)(T); bool (*eq_func)(T,T);}TUHashTable;
+void * next_hash_map_iter(Iterator * iter){
+    voidVec* v = iter->data;
+    if(v == (void*)iter->end){
+        return 0;
+    }
+    if(iter->idx == v->length){
+        if(v == (voidVec*)iter->end){
+            return 0;
+        }
+        while(iter->idx == v->length){
+            iter->idx = 0;
+            v ++;
+            void * old = iter->data;
+            iter->data = v;
+            assert(iter->data != old);
+            if(v == (voidVec*)iter->end){
+                return 0;
+            }
+        }
+    } 
+    void * out = v->items+iter->idx*iter->stride;
+    u32 old = iter->idx;
+    iter->idx = iter->idx+1;
+    return out+iter->value_offset;
+}
+
+CTILS_STATIC
+Iterator make_hash_map_iter(void * v, size_t stride, size_t offset){
+    void_ptrvoid_ptrHashTable* t = v;
+    Iterator out = {};
+    out.data = t->Table;
+    out.end = (size_t)(t->Table+t->TableSize);
+    out.idx = 0;
+    out.next = next_hash_map_iter;
+    out.stride = stride;
+    out.value_offset = offset;
+    return out;
+}
 #endif

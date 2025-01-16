@@ -7,7 +7,6 @@
 #include <stdio.h>
 
 enable_vec_type(int);
-enable_vec_type(String);
 enable_hash_type(String, int);
 
 make_lambda_type(void, void);
@@ -91,7 +90,23 @@ void test6(){
         printf("%d,",b.items[i]);
     }
 }
+
+
+enable_hash_type(String, i32);
+void test7(){
+    Stringi32HashTable * table = Stringi32HashTable_create(1000, hash_string, string_equals);
+    for(int i =0; i<100000; i++){
+        Stringi32HashTable_insert(table, string_format(0, "%d", i), i);
+    }
+    Iterator iter = ITER_HASHTABLE(table);
+    i32* p = 0;
+    while(( p = NEXT(iter))){
+        printf("%d\n", *p);
+    }
+    Stringi32HashTable_unmake_funcs(table,unmake_string, (void*)no_op_void);
+    debug_alloc_and_global_free_counts();
+}
 int main(int argc, const char ** argv){
-    test6();
+    test7();
     return 0;
 }
