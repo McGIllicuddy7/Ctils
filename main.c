@@ -26,7 +26,7 @@ void test(){
 
 void hash_test(){
     Arena * arena = arena_create();
-    StringintHashTable * s = StringintHashTable_create(10, hash_string, string_equals);
+    StringintHashTable * s = StringintHashTable_create(10, hash_string, string_equals, unmake_string, (void(*)(int*))no_op_void);
     StringVec strings = make(arena,String);
     for(int i =0; i<1000; i++){
         String tmp = string_random(arena,10, 20);
@@ -94,19 +94,46 @@ void test6(){
 
 enable_hash_type(String, i32);
 void test7(){
-    Stringi32HashTable * table = Stringi32HashTable_create(1000, hash_string, string_equals);
+    Stringi32HashTable * table = Stringi32HashTable_create(1000, hash_string, string_equals, unmake_string, (void(*)(int*))no_op_void);
     for(int i =0; i<100000; i++){
         Stringi32HashTable_insert(table, string_format(0, "%d", i), i);
     }
     Iterator iter = ITER_HASHTABLE(table);
     i32* p = 0;
-    while(( p = NEXT(iter))){
+    while(NEXT(p,iter)){
         printf("%d\n", *p);
     }
-    Stringi32HashTable_unmake_funcs(table,unmake_string, (void*)no_op_void);
+    Stringi32HashTable_unmake(table);
     debug_alloc_and_global_free_counts();
 }
+void test8(){
+    new_arena(local);
+    u64Vec items = make(local, u64);
+    for(int i =0; i<32; i++){
+        v_append(items, i);
+    }
+    u64 * iter = 0;
+    while((iter = v_consume_type(items, u64))){
+        printf("%llu\n", *iter);
+    }
+    printf("%zu\n", items.length);
+}
+StringVec strings = make_static(String,STRING("hello"), STRING("world"),STRING("lol"), STRING(":3"));
+
+void test9(){
+    Iterator it = ITER_VEC(strings);
+    String * t;
+    while(NEXT(t,it)){
+        printf("%s\n", t->items);
+    }
+}
+
+CONSTRUCT_HASHTABLE(Stringi32, table,hash_string, string_equals,{STRING("hey"),1}, {STRING("toast"), 2}, {STRING("i"), 4},{STRING("love"), 8}, {STRING("you"), 16}, {STRING("\n"),32});
+
+void test10(){
+    printf("%d\n", *Stringi32HashTable_find(table, STRING("hey")));
+}
 int main(int argc, const char ** argv){
-    test7();
+    test10();
     return 0;
 }

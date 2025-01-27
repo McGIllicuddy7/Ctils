@@ -21,8 +21,11 @@
 /*
 	Initial Defines
 */
+CTILS_STATIC
+void no_op_void(void*);
 #define STRINGIFY1(S) #S 
 #define STRINGIFY(S) STRINGIFY1(S)
+#define CONSTRUCTED(Type, name, fn, args...) Type name; __attribute__((constructor)) static void construct__##name__##fn () { name = fn(args);}
 CTILS_STATIC
 void * debug_alloc(size_t count, size_t size);
 
@@ -134,7 +137,7 @@ Slice stuff
 CTILS_STATIC
 void * memdup(Arena * arena,void * ptr, size_t size);
 
-#define enable_vec_type(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec
+#define enable_vec_type(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec; 
 
 enable_vec_type(void);
 enable_vec_type(Byte);
@@ -156,10 +159,11 @@ enable_vec_type(void_ptr);
 #define make(arena, T) (T##Vec){0,0,0, arena}
 #define tmp_make(T) (T##Vec){0,0,0, &temporary_allocator}
 
+#define make_static(T, args...) (const T##Vec){.items = (T[]){args}, .length = (size_t)sizeof((T[]){args})/sizeof(T), .capacity =0, .arena = 0}
+
 #define make_with_cap(arena, T, cap) (T##Vec){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
 #define tmp_make_with_cap(T, cap) (T##Vec){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
 
-#define make_static(in_arena, T, args...)
 
 #define clone(vec, arena)(typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 
@@ -170,7 +174,11 @@ enable_vec_type(void_ptr);
 	(vec).items =(typeof((vec).items))arena_realloc((vec).arena,(vec).items,(vec).capacity*sizeof((vec).items[0]), (vec).capacity*sizeof((vec).items[0])*2);(vec).capacity *= 2;}\
      else{\
 		(vec).capacity = 16;\
-		(vec).items = (typeof((vec).items))arena_alloc((vec).arena, 16*sizeof((vec).items[0]));\
+		typeof((vec).items) vtmp = (typeof((vec).items))arena_alloc((vec).arena, 16*sizeof((vec).items[0]));\
+		if((vec).items && (vec).length>0){\
+			memcpy(vtmp, (vec).items, sizeof((vec).items[0])*(vec).length);\
+		}\
+		(vec).items = vtmp;\
 		}\
 	 \
   }   (vec).items[(vec).length] = value; (&(vec))->length+= 1;}
@@ -185,17 +193,23 @@ enable_vec_type(void_ptr);
     memcpy(&vec.items[vec.length], other_items, sizeof(vec.items[0])*other_len);\
     vec.length += other_len; } 
 
+#define v_append_as_bytes(byte_vec, V)\
+	v_append_slice(byte_vec, &((typeof(V)[1]){V}), sizeof(V))
+
+#define v_consume(vec) (typeof(vec.items[0])*)vector_consume((voidVec *)(&vec), sizeof(vec.items[0]))
+#define v_consume_type(vec,T) (T*)vector_consume((voidVec * )(&vec), sizeof(T))
+
 #define v_remove(vec, idx)\
- if (idx < vec.length&& idx>0){\
+ if ((size_t)idx < vec.length){\
     memmove(&vec.items[idx-1], &vec.items[idx], (vec.length-idx-1)*sizeof(vec.items[0])); vec.length--;\
-    } else if (vec.length == idx){\
+    } else if (vec.length == (size_t)idx){\
         vec.length--;\
     } else if (idx == 0 && vec.length>0){memmove(&vec.items[0], &vec.items[1], (vec.length-1)*sizeof(vec.items[0])); vec.length--;}else{\
-        assert(idx>=0 &&idx <vec.length);\
+        assert(idx>=0 &&(size_t)idx <vec.length);\
     }
 
 #define v_insert(vec, idx, item)\
-    assert(idx<vec.length+1 && idx>=0);\
+    assert((size_t)idx<vec.length+1 && idx>=0);\
     if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
     memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
 #define v_resize(vec, len){\
@@ -206,12 +220,17 @@ vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,v
 
 #define len(vec) (vec).length
 
-#define unmake_fn(vec, fn) for(int i =0; i<vec.length; i++){fn(vec.items[i]);} unmake(vec)
-;
+#define v_unmake_fn(vec, fn) for(int i =0; i<vec.length; i++){fn(vec.items[i]);} unmake(vec);
+
+
+
+CTILS_STATIC
+void * vector_consume(voidVec * vec, size_t size);
 /*
 String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
+#define STRING(str) (String){.items = (cstr)str, .length = sizeof(str),.arena = 0, .capacity = 0}
 enable_vec_type(String);
 CTILS_STATIC
 String new_string(Arena * arena,const char* str);
@@ -226,7 +245,7 @@ String new_string_wide(Arena * arena,const wchar_t* str);
 
 CTILS_STATIC
 String string_format(Arena * arena, const char * fmt, ...);
-#define tmp_string_format(fmt...) string_format()
+#define tmp_string_format(fmt...) string_format(&temporary_allocator, fmt)
 
 CTILS_STATIC
 String string_random(Arena * arena, int minlen, int maxlen);
@@ -325,25 +344,29 @@ typedef struct{\
 	size_t TableSize;\
 	size_t (*hash_func)(T);\
 	bool (*eq_func)(T,T);\
+	void (*not_key)(T*);\
+	void (*not_value)(U*);\
 }T##U##HashTable;\
-static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(T),bool (*eq_func)(T,T)){\
+static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(T),bool (*eq_func)(T,T), void (*tdestructor)(T *), void (*udestructor)(U*)){\
 	T##U##HashTable * out = (T##U##HashTable *)global_alloc(1, sizeof(T##U##HashTable));\
 	out->Table= (T##U##KeyValuePairVec *)global_alloc(1,sizeof(T##U##KeyValuePairVec)*size);\
 	out->TableSize = size;\
 	out->hash_func = hash_func;\
 	out->eq_func = eq_func;\
-	for(int i =0; i<size; i++){\
+	out->not_key = tdestructor;\
+	out->not_value = udestructor;\
+	for(size_t i =0; i<size; i++){\
 		out->Table[i] = (T##U##KeyValuePairVec)make_with_cap(0,T##U##KeyValuePair,16);\
 	}\
 	return out;\
 }\
 static void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_size){\
 	T##U##KeyValuePairVec* new_table = (T##U##KeyValuePairVec *)global_alloc(8,new_size);\
-	for(int i =0; i<new_size; i++){\
+	for(size_t i =0; i<new_size; i++){\
 		new_table[i] = (T##U##KeyValuePairVec)make_with_cap(0,T##U##KeyValuePair,8);\
 	}\
-	for(int i =0; i<table->TableSize; i++){\
-		for(int j = 0; j<len(table->Table[i]); j++){\
+	for(size_t i =0; i<table->TableSize; i++){\
+		for(size_t j = 0; j<len(table->Table[i]); j++){\
 			size_t hashval = table->hash_func(table->Table[i].items[j].key);\
 			size_t hash = hashval%new_size;\
 			T##U##KeyValuePair pair = {.key = table->Table[i].items[j].key, .value = table->Table[i].items[j].value};\
@@ -354,7 +377,7 @@ static void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_size){\
 	size_t old_len = table->TableSize;\
 	table->Table = new_table;\
 	table->TableSize = new_size;\
-	for(int i =0; i<old_len; i++){\
+	for(size_t i =0; i<old_len; i++){\
 		unmake(old[i]);\
 	}\
     global_free(old);\
@@ -362,7 +385,7 @@ static void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_size){\
 static U* T##U##HashTable_find(T##U##HashTable* table, T key){\
 	size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
-	for(int i =0 ; i<len(table->Table[hash]); i++){\
+	for(size_t i =0 ; i<len(table->Table[hash]); i++){\
 		T##U##KeyValuePair p = table->Table[hash].items[i];\
 		if(table->eq_func(p.key, key)){\
 			return &table->Table[hash].items[i].value;\
@@ -371,9 +394,12 @@ static U* T##U##HashTable_find(T##U##HashTable* table, T key){\
 	return nil;\
 }\
 static T##U##KeyValuePair* T##U##HashTable_find_kv(T##U##HashTable* table, T key){\
+	if(table->TableSize == 0){\
+		return 0;\
+	}\
 	size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
-	for(int i =0 ; i<len(table->Table[hash]); i++){\
+	for(size_t i =0 ; i<len(table->Table[hash]); i++){\
 		T##U##KeyValuePair p = table->Table[hash].items[i];\
 		if(table->eq_func(p.key, key)){\
 			return &table->Table[hash].items[i];\
@@ -387,7 +413,7 @@ static void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
 	T##U##KeyValuePair pair = (T##U##KeyValuePair){.key = key,.value = value};\
 	T##U##KeyValuePairVec tmp = table->Table[hash];\
     int idx = -1;\
-    for(int i =0; i<table->Table[hash].length; i++){\
+    for(size_t i =0; i<table->Table[hash].length; i++){\
         if(table->eq_func(key, table->Table[hash].items[i].key)){\
             idx = i;\
             break;\
@@ -403,9 +429,8 @@ static void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
 static bool T##U##HashTable_contains(T##U##HashTable * table, T key){\
 	size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
-	T##U##KeyValuePairVec tmp = table->Table[hash];\
     int idx = -1;\
-    for(int i =0; i<table->Table[hash].length; i++){\
+    for(size_t i =0; i<table->Table[hash].length; i++){\
         if(table->eq_func(key, table->Table[hash].items[i].key)){\
             idx = i;\
             break;\
@@ -417,35 +442,38 @@ static void T##U##HashTable_remove(T##U##HashTable * table, T key){\
     size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
     int idx = -1;\
-    for(int i =0; i<table->Table[hash].length; i++){\
+    for(size_t i =0; i<table->Table[hash].length; i++){\
         if( table->eq_func(key, table->Table[hash].items[i].key)){\
             idx = i;\
             break;\
         }\
     }\
     if(idx>=0){\
+		table->not_key(&table->Table[hash].items[idx].key);\
+		table->not_value(&table->Table[hash].items[idx].value);\
         v_remove(table->Table[hash], idx);\
     }\
 }\
 static void T##U##HashTable_unmake(T##U##HashTable * table){\
-	for(int i =0; i<table->TableSize; i++){\
-		unmake(table->Table[i]);\
-	}\
-	global_free(table->Table);\
-	global_free(table);\
-}\
-static void T##U##HashTable_unmake_funcs(T##U##HashTable * table,void (*not_key)(T * key), void (*not_value)(U * value)){\
-	for(int i =0; i<table->TableSize; i++){\
-		for(int j =0; j<table->Table[i].length; j++){\
-			if(not_key){not_key(&table->Table[i].items[j].key);}\
-			if(not_value){not_value(&table->Table[i].items[j].value);}\
+	for(size_t i =0; i<table->TableSize; i++){\
+		for(size_t j =0; j<table->Table[i].length; j++){\
+			if(table->not_key){table->not_key(&table->Table[i].items[j].key);}\
+			if(table->not_value){table->not_value(&table->Table[i].items[j].value);}\
 		}\
 		unmake(table->Table[i]);\
 	}\
 	global_free(table->Table);\
 	global_free(table);\
 }\
+static T##U##HashTable * T##U##HashTable_construct_from_list(T##U##KeyValuePair * pairs, size_t count,size_t (*hash_func)(T),bool (*eq_func)(T,T)){\
+	T##U##HashTable* tmp = T##U##HashTable_create(count,hash_func, eq_func, (void (*)(T *))no_op_void, (void(*)(U*))no_op_void);\
+	for(size_t i =0; i<count; i++){\
+		T##U##HashTable_insert(tmp,pairs[i].key, pairs[i].value);\
+	}\
+	return tmp;\
+}
 
+#define CONSTRUCT_HASHTABLE(T, name, hash_func, eq_func,args...) CONSTRUCTED(T##HashTable*, name, T##HashTable_construct_from_list, (T##KeyValuePair[]){args}, sizeof((T##KeyValuePair[]){args})/(sizeof(T##KeyValuePair)), hash_func, eq_func)
 enable_hash_type(void_ptr, void_ptr);
 
 /*
@@ -484,8 +512,9 @@ ByteVec read_file_to_bytes(Arena * arena, const char *file_name);
 
 CTILS_STATIC
 bool is_number(char a);
-CTILS_STATIC;
-void no_op_void(void*);
+
+CTILS_STATIC
+bool cstr_equals(const char * a,const char * b);
 /*
  Noise functionality 
 */
@@ -527,9 +556,13 @@ typedef struct Iterator{
     size_t value_offset;
     void *(*next)(struct Iterator*);
 }Iterator;
-#define NEXT(It) (It.next(&It))
+#define hack_offsetof(st, m) \
+    (size_t)&(((st)0)->m)
+
+#define NEXT(value,It) (value = (typeof(value))It.next(&It))
 #define ITER_VEC(v) make_vec_iterator(*(voidVec*)(&v), sizeof(v.items[0]))
-#define ITER_HASHTABLE(v) make_hash_map_iter(v, sizeof(v->Table[0].items[0]), __offsetof(typeof(*(v->Table->items)), value))
+//#define ITER_HASHTABLE(v) make_hash_map_iter(v, sizeof(v->Table[0].items[0]), (size_t)&(typeof(*(v->Table->items)) *0->value)))
+#define ITER_HASHTABLE(v) make_hash_map_iter(v, sizeof(v->Table[0].items),(hack_offsetof(typeof(v->Table[0].items),value)))
 #define ITER_HASHTABLE_KV(v) make_hash_map_iter(v, sizeof(v->Table[0].items[0]), 0)
 
 CTILS_STATIC
@@ -586,8 +619,8 @@ Memory Stuff
 CTILS_STATIC
 void mem_shift(void * start, size_t size, size_t count, size_t distance){
 	char * data = (char *)start;
-	for(int j = 0; j<size*distance; j++){
-		for (int i = count*size; i>0; i--){
+	for(size_t j = 0; j<size*distance; j++){
+		for (size_t i = count*size; i>0; i--){
 			data[i] = data[i-1];
 		}
 	}
@@ -623,8 +656,8 @@ void defer(Arena * arena, void(*func)(void *), void * data){
 	if(!arena){
 		return;
 	}
-	arena_defer * def = arena_alloc(arena, sizeof(arena_defer));
-	def->next = arena->defer_queue;
+	arena_defer * def = (arena_defer*)arena_alloc(arena, sizeof(arena_defer));
+	def->next = (arena_defer *)arena->defer_queue;
 	def->func = func;
 	def->data = data;
 	arena->defer_queue =def;
@@ -639,7 +672,7 @@ Arena * arena_create(){
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
 	pthread_mutex_t lck;
 	pthread_mutex_init(&lck,0);
-    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next};
+    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next, 0};
 	#ifdef ARENA_REGISTER
 	register_arena(out);
 	#endif
@@ -660,7 +693,7 @@ Arena * arena_create_sized(size_t reqsize){
 	pthread_mutex_t lck;
 	pthread_mutex_init(&lck,0);
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
-    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next};
+    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next,0};
 	#ifdef ARENA_REGISTER
 	register_arena(out);
 	#endif
@@ -673,10 +706,9 @@ void arena_destroy(Arena * arena){
         return;
     }
 	while(arena->defer_queue){
-		arena_defer *def = arena->defer_queue;
+		arena_defer *def = (arena_defer*)arena->defer_queue;
 		def->func(def->data);
 		arena->defer_queue = def->next;
-		
 	}
 	#ifdef ARENA_REGISTER
 	deregister_arena(arena);
@@ -718,7 +750,6 @@ void * arena_realloc(Arena * arena, void * ptr, size_t previous_size, size_t new
         return global_realloc(ptr,new_size);
     }
 	pthread_mutex_lock(&arena->lock);
-    size_t act_sz = new_size+(8-new_size%8);
     if (arena->previous_allocation == ptr && ptr){
         arena->next_ptr = (char*)ptr;
     }
@@ -737,6 +768,11 @@ void arena_reset(Arena * arena){
 	arena->next = 0;
     arena->next_ptr= arena->buffer;
     arena->previous_allocation = 0;
+	while(arena->defer_queue){
+		arena_defer *def = (arena_defer*)arena->defer_queue;
+		def->func(def->data);
+		arena->defer_queue = def->next;
+	}
 	pthread_mutex_unlock(&arena->lock);
 }
 
@@ -747,6 +783,21 @@ void arena_free(Arena * arena, void * ptr){
     }
 }
 /*
+vector stuff
+*/
+
+CTILS_STATIC
+void * vector_consume(voidVec * vec, size_t size){
+	if(vec->items == 0 || vec->length == 0){
+		return 0;
+	}
+	void * out = vec->items;
+	vec->length-=1;
+	vec->items = (char *)vec->items+size;
+	vec->capacity -=1;
+	return out;
+}
+/*
 Hashing
 */
 
@@ -755,7 +806,7 @@ size_t hash_bytes(Byte * bytes, size_t size){
 	size_t out = 0;
 	const size_t pmlt = 31;
 	size_t mlt = 31;
-	for(int i =0; i<size;i++){
+	for(size_t i =0; i<size;i++){
 		out += bytes[i]*mlt;
 		mlt*=pmlt;
 	}
@@ -791,7 +842,7 @@ size_t hash_string(String str){
 	size_t out = 0;
 	const size_t pmlt = 31;
 	size_t mlt = 1;
-	for(int i =0; i<len(str);i++){
+	for(size_t i =0; i<len(str);i++){
 		out += str.items[i]*mlt;
 		mlt*=pmlt;
 	}
@@ -857,8 +908,8 @@ int execute(const char ** strings){
     }
     int s = fork();
     if(!s){
-        int a = execvp(strings[0], (char*const*)strings);
-		exit(0);
+        int a =execvp(strings[0], (char*const*)strings);
+		exit(a);
     }else{
         return s;
     }
@@ -879,7 +930,7 @@ int execute_fd(int f_out, int f_in, int f_er, const char ** strings){
         dup2(f_in, fileno(stdin));
         dup2(f_er, fileno(stderr));
         int a = execvp(strings[0], (char*const*)strings);
-		exit(0);
+		exit(a);
     }else{
         return s;
     }
@@ -907,7 +958,7 @@ bool str_equals(Str a, Str b){
     if(a.length != b.length){
         return 0;
     } 
-    for(int i= 0; i<a.length; i++){
+    for(size_t i= 0; i<a.length; i++){
         if(a.items[i] != b.items[i]){
             return false;
         }
@@ -919,7 +970,7 @@ CTILS_STATIC
 void put_str_ln(Str str){
     printf("<");
     assert(str.length >0);
-    for(int i =0;i<str.length; i++){
+    for(size_t i =0;i<str.length; i++){
         printf("%c", str.items[i]);
     }
     printf(">\n");
@@ -934,11 +985,11 @@ char * str_to_c_string(Arena * arena, Str s){
 }
 
 CTILS_STATIC
-bool lookahead_matches(Str base, int start, Str delim){
+bool lookahead_matches(Str base, size_t start, Str delim){
     if(start+delim.length>base.length){
         return false;
     }
-    for(int i=start; i<start+delim.length; i++){
+    for(size_t i=(size_t)start; i<(size_t)start+delim.length; i++){
         if(base.items[i] != delim.items[i-start]){
 
             return false;
@@ -951,8 +1002,8 @@ bool lookahead_matches(Str base, int start, Str delim){
 CTILS_STATIC
 StrVec str_split_by_delim(Arena * arena,Str base, Str delim){
     StrVec out = make(arena, Str);
-    int start = 0;
-    for(int i =0; i<base.length; i++){
+    size_t start = 0;
+    for(size_t i =0; i<base.length; i++){
         if(lookahead_matches(base, i, delim)){
             if(i>start){
                 v_append(out, substring(base, start,i));
@@ -973,8 +1024,8 @@ StrVec str_split_by_delim(Arena * arena,Str base, Str delim){
 CTILS_STATIC
 StrVec str_split_by_delim_no_delims(Arena * arena,Str base, Str delim){
     StrVec out = make(arena, Str);
-    int start = 0;
-    for(int i =0; i<base.length; i++){
+    size_t start = 0;
+    for(size_t i =0; i<base.length; i++){
         if(lookahead_matches(base, i, delim)){
             if(i>start){
                 v_append(out, substring(base, start,i));
@@ -1014,7 +1065,7 @@ CTILS_STATIC
 String new_string(Arena * arena,const char* str){
 	int l = strlen(str)+1;
     String out;
-	out.items = arena_alloc(arena, l*sizeof(str_type));
+	out.items = (char*)arena_alloc(arena, l*sizeof(str_type));
 	out.length =0; 
 	out.capacity = l;
 	out.arena = arena;
@@ -1029,7 +1080,7 @@ CTILS_STATIC
 String new_string_wide(Arena * arena,const wchar_t* str){
     int l = wcslen(str);
 	String out;
-	out.items = arena_alloc(arena, l*sizeof(str_type));
+	out.items = (char *)arena_alloc(arena, l*sizeof(str_type));
 	out.length =0; 
 	out.capacity = l;
 	out.arena = arena;
@@ -1146,7 +1197,7 @@ bool string_equals(String a, String b){
 	if(len(a) != len(b)){
 		return 0;
 	}
-	for(int i= 0; i<len(a); i++){
+	for(size_t i= 0; i<len(a); i++){
 		if(a.items[i] != b.items[i]){
 			return 0;
 		}
@@ -1158,7 +1209,7 @@ CTILS_STATIC
 String string_random(Arena * arena,int minlen, int maxlen){
 	int length = rand()%(maxlen-minlen)+minlen;
 	String out;
-	out.items = arena_alloc(arena,(length+1)*sizeof(str_type));
+	out.items = (char*)arena_alloc(arena,(length+1)*sizeof(str_type));
 	out.length =0; 
 	out.capacity = length+1;
 	out.arena = arena;
@@ -1253,6 +1304,10 @@ CTILS_STATIC
 void no_op_void(void*){
 
 }
+CTILS_STATIC
+bool cstr_equals(const char * a,const char * b){
+	return strcmp(a, b) ==0;
+}
 /*
  Noise stuff 
  */
@@ -1323,8 +1378,8 @@ void * next_vec_iter(Iterator * iter){
         return 0;
     }
     else{
-        void * nxt = iter->data+iter->idx*iter->stride;
-        iter->idx += 1;
+        void * nxt = (void*)((char *)iter->data+iter->idx*iter->stride);
+        iter->idx +=1;
         return nxt;
     }
 }
@@ -1344,7 +1399,7 @@ CTILS_STATIC
 //typedef struct{ KeyValuePairVec *Table; 
 //size_t TableSize; size_t (*hash_func)(T); bool (*eq_func)(T,T);}TUHashTable;
 void * next_hash_map_iter(Iterator * iter){
-    voidVec* v = iter->data;
+    voidVec* v = (voidVec*)iter->data;
     if(v == (void*)iter->end){
         return 0;
     }
@@ -1363,15 +1418,14 @@ void * next_hash_map_iter(Iterator * iter){
             }
         }
     } 
-    void * out = v->items+iter->idx*iter->stride;
-    u32 old = iter->idx;
+    void * out = (void*)((char*)v->items+iter->idx*iter->stride);
     iter->idx = iter->idx+1;
-    return out+iter->value_offset;
+    return (void*)((char*)out+iter->value_offset);
 }
 
 CTILS_STATIC
 Iterator make_hash_map_iter(void * v, size_t stride, size_t offset){
-    void_ptrvoid_ptrHashTable* t = v;
+    void_ptrvoid_ptrHashTable* t = (void_ptrvoid_ptrHashTable*)v;
     Iterator out = {};
     out.data = t->Table;
     out.end = (size_t)(t->Table+t->TableSize);
