@@ -128,7 +128,7 @@ void test9(){
     }
 }
 
-CONSTRUCT_HASHTABLE(Stringi32, table,hash_string, string_equals,{STRING("hey"),1}, {STRING("toast"), 2}, {STRING("i"), 4},{STRING("love"), 8}, {STRING("you"), 16}, {STRING("\n"),32});
+static CONSTRUCT_HASHTABLE(Stringi32, table,hash_string, string_equals,{STRING("hey"),1}, {STRING("toast"), 2}, {STRING("i"), 4},{STRING("love"), 8}, {STRING("you"), 16}, {STRING("\n"),32});
 
 void test10(){
     printf("%d\n", *Stringi32HashTable_find(table, STRING("hey")));

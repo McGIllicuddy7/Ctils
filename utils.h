@@ -81,7 +81,12 @@ void mem_shift(void * start, size_t size, size_t count, size_t distance);
 /*
 Arena stuff 
 */
-
+typedef struct ArenaDestructor{
+	void (*destructor)(void*);
+	void * address;
+	struct ArenaDestructor * next;
+	
+} ArenaDestructor;
 typedef struct Arena{
 	pthread_mutex_t lock;
     char* buffer;
@@ -90,6 +95,7 @@ typedef struct Arena{
     char* previous_allocation;
     struct Arena * next;
 	void * defer_queue;
+	ArenaDestructor * destructor_queue;
 } Arena;
 
 CTILS_STATIC
@@ -117,6 +123,16 @@ void arena_reset(Arena * arena);
 CTILS_STATIC 
 void defer(Arena * arena, void (*func)(void*),void * data);
 
+CTILS_STATIC
+void arena_queue_destructor(Arena * arena,void (*fn)(void *), void * address);
+#ifdef __cplusplus
+CTILS_STATIC template<typename T> void destruct(T * value){
+	value->~T();
+}
+template <typename T>void arena_qd(Arena * arena, T* v){
+	arena_queue_destructor(arena, (void (*)(void *))destruct<T>, v);
+}
+#endif
 #define tmp_alloc(size) arena_alloc(&temporary_allocator, size);
 
 
@@ -136,9 +152,42 @@ Slice stuff
 
 CTILS_STATIC
 void * memdup(Arena * arena,void * ptr, size_t size);
-
+#ifdef __cplusplus
+#include <new>
+CTILS_STATIC template<typename T>T * memdup_destructors(Arena * arena, T * ptr,size_t count){
+	T * out = (T*)arena_alloc(arena, sizeof(T)*count);
+	for(int i =0; i<count; i++){
+		new (&out[i]) T(ptr[i]);
+		void (*func)(void *) = (void (*)(void *))(T::~T);
+		void * vptr = (void *)(((T*)out +i));
+		if constexpr (!std::is_trivially_destructible<T>()){
+			arena_queue_destructor(arena, func, vptr);
+		}
+	}
+}
+CTILS_STATIC template<typename T> void arena_copy_to(Arena * arena,T* dest, T * src, size_t count){
+	for(int i =0; i<count; i++){
+		dest[i] = src[i];
+	}
+	if constexpr(!std::is_trivially_destructible<T>()){
+		for(int i =0; i<count; i++){
+			arena_queue_destructor(arena, (void (*)(void*))destruct<T>, &dest[i]);
+		}
+	}
+}
+CTILS_STATIC template<typename T, typename...Args> T * arena_new(Arena * arena, Args...args){
+	T * out = (T*)arena_alloc(arena, sizeof(T));
+	new (out) T(args...);
+	if constexpr(!std::is_trivially_destructible<T>()){
+		arena_queue_destructor(arena, (void (*)(void *))destruct<T>, out);
+	}
+	return out;
+}
+#endif
 #define enable_vec_type(T) typedef struct {T * items; size_t length; size_t capacity; Arena * arena;} T##Vec; 
-
+#ifdef __cplusplus 
+template<typename T> struct Vec{T * items; size_t length; size_t capacity; Arena * arena;};
+#endif
 enable_vec_type(void);
 enable_vec_type(Byte);
 enable_vec_type(i8);
@@ -164,12 +213,49 @@ enable_vec_type(void_ptr);
 #define make_with_cap(arena, T, cap) (T##Vec){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
 #define tmp_make_with_cap(T, cap) (T##Vec){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
 
-
-#define clone(vec, arena)(typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
+#ifdef __cplusplus
+#define clone(vec, arena) (typeof((vec))){memdup_destructors(arena,vec.items, vec.length), vec.length, vec.capacity}
+#else
+#define clone(vec, arena) (typeof((vec))){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
+#endif 
 
 #define v_swap(a, b) {typeof(a) v_swap_temporary_value = a; a =b; b = v_swap_temporary_value;}
-#define v_append(vec, value)\
- {if((vec).capacity<=(vec).length+1){\
+#ifdef __cplusplus
+static bool arena_object_exists(Arena *arena, void * ptr){
+	ArenaDestructor *a = arena->destructor_queue;
+	while(a){
+		if(a->address == ptr){
+			return true;
+		}
+		a = a->next;
+	} 
+	return false;
+}
+template<typename T, typename U> void v_append(U& vec, T value){
+	if((vec).capacity<=(vec).length+1){
+		if ((vec).capacity != 0){
+			T* vtmp = (T*)arena_alloc((vec).arena,(vec).capacity*sizeof(T)*2);(vec).capacity *= 2;
+			memset(vtmp, 0, sizeof(T)*(vec).capacity);
+			arena_copy_to((vec).arena, vtmp, (vec.items), (vec).length);
+			vec.items = vtmp;
+		}else{
+			(vec).capacity = 16;\
+			T* vtmp = (T*)arena_alloc((vec).arena, 16*sizeof((vec).items[0]));
+			if((vec).items && (vec).length>0){
+				arena_copy_to((vec).arena, vtmp, (vec).items, (vec).length);
+			}
+			(vec).items = vtmp;
+		}
+  	}   
+  	(vec).items[(vec).length] = value; 
+	size_t old_len = vec.length;
+	vec.length += 1;
+	if constexpr(!std::is_trivially_destructible<T>()){
+		arena_qd((vec).arena, &(vec).items[(vec).length-1]);
+	}
+}
+#else
+ #define v_append(vec, value){if((vec).capacity<=(vec).length+1){\
     if ((vec).capacity != 0){\
 	(vec).items =(typeof((vec).items))arena_realloc((vec).arena,(vec).items,(vec).capacity*sizeof((vec).items[0]), (vec).capacity*sizeof((vec).items[0])*2);(vec).capacity *= 2;}\
      else{\
@@ -180,11 +266,22 @@ enable_vec_type(void_ptr);
 		}\
 		(vec).items = vtmp;\
 		}\
-	 \
-  }   (vec).items[(vec).length] = value; (&(vec))->length+= 1;}
+  }   \
+  	(vec).items[(vec).length] = value; (&(vec))->length+= 1;\
+  }
 
+#endif
 #define unmake(vec) arena_free((vec).arena,(vec).items) 
 
+#ifdef __cplusplus
+#define v_append_slice(vec, other_items, other_len)\
+ {if(vec.capacity<vec.length+other_len){\
+    size_t previous = vec.capacity*sizeof(vec.items[0]);\
+    while (vec.capacity<vec.length+other_len){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
+    vec.items = arena_realloc(vec.arena,vec.items,previous,vec.capacity*sizeof(vec.items[0]));}\
+	arena_copy_to((&vec.items[vec.length], other_items, other_len);\
+    vec.length += other_len; } 
+#else 
 #define v_append_slice(vec, other_items, other_len)\
  {if(vec.capacity<vec.length+other_len){\
     size_t previous = vec.capacity*sizeof(vec.items[0]);\
@@ -192,7 +289,7 @@ enable_vec_type(void_ptr);
     vec.items = arena_realloc(vec.arena,vec.items,previous,vec.capacity*sizeof(vec.items[0]));}\
     memcpy(&vec.items[vec.length], other_items, sizeof(vec.items[0])*other_len);\
     vec.length += other_len; } 
-
+#endif
 #define v_append_as_bytes(byte_vec, V)\
 	v_append_slice(byte_vec, &((typeof(V)[1]){V}), sizeof(V))
 
@@ -208,10 +305,17 @@ enable_vec_type(void_ptr);
         assert(idx>=0 &&(size_t)idx <vec.length);\
     }
 
+#ifdef __cplusplus
+#define v_insert(vec, idx, item)\
+    assert((size_t)idx<vec.length+1 && idx>=0);\
+    if(vec.length+1> vec.capacity){vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
+    memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;  arena_queue_destructor((vec.arena), (void (*)(void *))destruct<typeof(vec.items)>, &vec.items[vec.length-1]);
+#else 
 #define v_insert(vec, idx, item)\
     assert((size_t)idx<vec.length+1 && idx>=0);\
     if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
     memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
+#endif
 #define v_resize(vec, len){\
 vec.length= len;\
 size_t previous_cap = vec.capacity;\
@@ -220,7 +324,7 @@ vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,v
 
 #define len(vec) (vec).length
 
-#define v_unmake_fn(vec, fn) for(int i =0; i<vec.length; i++){fn(vec.items[i]);} unmake(vec);
+#define unmake_fn(vec, fn) for(int i =0; i<vec.length; i++){fn(vec.items[i]);} unmake(vec);
 
 
 
@@ -670,6 +774,7 @@ Arena * arena_create(){
     char * previous_allocation = 0;
     struct Arena * next = 0;
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
+	out->destructor_queue =0;
 	pthread_mutex_t lck;
 	pthread_mutex_init(&lck,0);
     *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next, 0};
@@ -694,6 +799,7 @@ Arena * arena_create_sized(size_t reqsize){
 	pthread_mutex_init(&lck,0);
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
     *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next,0};
+	out->destructor_queue =0;
 	#ifdef ARENA_REGISTER
 	register_arena(out);
 	#endif
@@ -710,6 +816,12 @@ void arena_destroy(Arena * arena){
 		def->func(def->data);
 		arena->defer_queue = def->next;
 	}
+	while(arena->destructor_queue){
+		ArenaDestructor * dest = arena->destructor_queue;
+		dest->destructor(dest->address);
+		arena->destructor_queue = dest->next;
+	}
+	arena->destructor_queue =0;
 	#ifdef ARENA_REGISTER
 	deregister_arena(arena);
 	#endif
@@ -724,10 +836,14 @@ void * arena_alloc(Arena * arena, size_t size){
     if(!arena){
         return global_alloc(1,size);
     }
-	pthread_mutex_lock(&arena->lock);
-    size_t act_sz = size+(8-size%8);
+	pthread_mutex_lock(&arena->lock);	
+	
+    size_t act_sz = size+(16-size%16);
+	if(size >= 16 && size%16==0){
+		act_sz = size;
+	}
     char * previous = arena->next_ptr;
-    if(previous + act_sz>arena->end){
+    if(previous + act_sz>=arena->end){
         if (!arena->next){
             arena->next = arena_create_sized(size);
         }
@@ -773,6 +889,13 @@ void arena_reset(Arena * arena){
 		def->func(def->data);
 		arena->defer_queue = def->next;
 	}
+	arena->defer_queue =0;
+	while(arena->destructor_queue){
+		ArenaDestructor * dest = arena->destructor_queue;
+		dest->destructor(dest->address);
+		arena->destructor_queue = dest->next;
+	}
+	arena->destructor_queue = 0;
 	pthread_mutex_unlock(&arena->lock);
 }
 
@@ -781,6 +904,32 @@ void arena_free(Arena * arena, void * ptr){
     if(!arena){
         global_free(ptr);
     }
+}
+CTILS_STATIC
+void arena_queue_destructor_span(Arena * arena, void (*fn)(void *), void * start, size_t offset, size_t count){
+
+}
+CTILS_STATIC
+void arena_queue_destructor(Arena * arena,void (*fn)(void *), void * address){
+	if(!arena){
+		return;
+	}
+	ArenaDestructor * dest = arena->destructor_queue;
+	int count =0;
+	while(dest){
+		count +=1;
+		if(dest->address == address){
+			return;
+		}else{
+			dest = dest->next;
+		}
+	}
+	ArenaDestructor * nw =(ArenaDestructor*) arena_alloc(arena, sizeof(ArenaDestructor)*2);
+	nw->next =0;
+	nw->next = arena->destructor_queue;
+	nw->destructor = fn;
+	nw->address = address;
+	arena->destructor_queue = nw;
 }
 /*
 vector stuff
@@ -797,6 +946,7 @@ void * vector_consume(voidVec * vec, size_t size){
 	vec->capacity -=1;
 	return out;
 }
+
 /*
 Hashing
 */
@@ -1301,7 +1451,7 @@ bool is_number(char a){
 	return a == '0' || a == '1' || a == '2' || a == '3' || a == '4' || a == '5' || a == '6' || a == '7' || a == '8' || a == '9';
 }
 CTILS_STATIC
-void no_op_void(void*){
+void no_op_void(void*ptr){
 
 }
 CTILS_STATIC
