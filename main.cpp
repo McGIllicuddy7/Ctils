@@ -45,7 +45,7 @@ struct Deleted{
 enable_vec_type(Deleted);
 int main(){
     Arena * local = arena_create();
-    i32Vec ints = make(local, Deleted);
+    DeletedVec ints = make(local, Deleted);
     for(int i =0; i<5000; i++){
         v_append(ints, std::move(Deleted(string_format(local,"%d", i).items)));
     }
