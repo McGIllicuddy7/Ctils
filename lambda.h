@@ -1,4 +1,5 @@
 #include "utils.h"
+#warning "PLEASE DON'T USE THIS"
 #define make_lambda_type(name,return_type, ...) typedef struct{union {return_type (*fn)(const void * __VA_OPT__(,__VA_ARGS__));return_type (*fn_no_args)(__VA_ARGS__); };void * data;}fn_##name;
 #define make_lambda_capture(lambda_type,return_type,name, body,fn_captures,...) \
     struct name##Captures fn_captures;\

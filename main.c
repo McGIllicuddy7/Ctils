@@ -3,7 +3,6 @@
 //#include "utils_math.h"
 #include "lambda.h"
 #include <stdio.h>
-#include "string_utils.h"
 #include <stdio.h>
 
 enable_vec_type(int);
