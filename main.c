@@ -18,10 +18,12 @@ make_lambda(fn_int_to_int, int, add12, {return a+12;}, int a)
 
 make_lambda_type(int, int);
 void test(){
-    fn_void test = lambda(testing123);
+    Arena * local = arena_create();
+    fn_void test = lambda(local,testing123);
     call(test);
     test = tmp_lambda(testing12,{"abcdefghijklmnopqrstuvwxyz"});
     call(test);
+    arena_destroy(local);
 }   
 
 void hash_test(){
