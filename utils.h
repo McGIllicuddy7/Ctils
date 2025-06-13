@@ -1587,5 +1587,3 @@ Iterator make_hash_map_iter(void * v, size_t stride, size_t offset){
     return out;
 }
 #endif
-
-

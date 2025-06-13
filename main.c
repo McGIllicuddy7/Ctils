@@ -1,4 +1,5 @@
 #define CTILS_IMPLEMENTATION
+#include "string_utils.h"
 #include "utils.h"
 //#include "utils_math.h"
 #include "lambda.h"
@@ -65,6 +66,9 @@ void test5(){
     v_append(delims, STR(" "));
     TokenVec tokens = tokenize_str(local, string_to_str(s), delims.items, 
     delims.length, STR("test.lisp"));
+    for(int i =0; i<tokens.length; i++){
+       printf("<%s>\n", str_to_string(local,tokens.items[i].str).items); 
+    }
     arena_destroy(local);
 }
 
@@ -133,6 +137,6 @@ void test10(){
     printf("%d\n", *Stringi32HashTable_find(table, STRING("hey")));
 }
 int main(int argc, const char ** argv){
-    test10();
+    test3();
     return 0;
 }

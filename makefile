@@ -1,4 +1,4 @@
-build: main.cpp
-	g++ main.cpp -lm -std=c++20 -g3 -fsanitize=address
+build: main.c
+	gcc main.c -lm -std=c2x -g3 -fsanitize=address
 generate: generator.c 
 	gcc generator.c -g3 -std=c2x -lm
