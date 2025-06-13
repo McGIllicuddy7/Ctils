@@ -11,7 +11,6 @@
 #include <assert.h>
 #include <wchar.h>
 #include <sys/time.h>
-#include <errno.h>
 #include <stdint.h>
 #include <math.h>
 #include <pthread.h>
