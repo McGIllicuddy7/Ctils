@@ -138,7 +138,8 @@ static CONSTRUCT_HASHTABLE(Stringi32, table,hash_string, string_equals,{STRING("
 void test10(){
     printf("%d\n", *Stringi32HashTable_find(table, STRING("hey")));
 }
+extern void test11();
 int main(int argc, const char ** argv){
-    test3();
+    test11();
     return 0;
 }
