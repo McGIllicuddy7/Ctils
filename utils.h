@@ -1,6 +1,5 @@
 #pragma once
-//use #define CTILS_IMPLEMENTATION
-#define CTILS_IMPLEMENTATION
+/*use #define CTILS_IMPLEMENTATION*/
 #ifndef CTILS_STATIC
 #define CTILS_STATIC
 #endif
@@ -16,8 +15,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <signal.h>
-#define true 1 
-#define false 0
+
 /*
 	Initial Defines
 */
@@ -25,7 +23,7 @@ CTILS_STATIC
 void no_op_void(void*);
 #define STRINGIFY1(S) #S 
 #define STRINGIFY(S) STRINGIFY1(S)
-#define CONSTRUCTED(Type, name, fn, args...) Type name; __attribute__((constructor)) static void construct__##name__##fn () { name = fn(args);}
+#define CONSTRUCTED(Type, name, fn, ...) Type name; __attribute__((constructor)) static void construct__##name__##fn () { name = fn(VA_ARGS);}
 CTILS_STATIC
 void * debug_alloc(size_t count, size_t size);
 
@@ -36,7 +34,7 @@ CTILS_STATIC
 void *debug_realloc(void * ptr, size_t size);
 
 CTILS_STATIC
-void debug_alloc_and_global_free_counts();
+void debug_alloc_and_global_free_counts(void);
 
 #ifndef global_alloc
 #define global_alloc(count,sz) debug_alloc(count, sz)
@@ -100,7 +98,7 @@ typedef struct Arena{
 } Arena;
 
 CTILS_STATIC
-Arena * arena_create();
+Arena * arena_create(void);
 
 void arena_destroy_thunk(Arena **);
 #define new_arena(name) __attribute__((cleanup(arena_destroy_thunk))) Arena * name; name = arena_create()
@@ -145,7 +143,7 @@ template <typename T>void arena_qd(Arena * arena, T* v){
 extern Arena temporary_allocator;
 #endif
 #ifdef CTILS_IMPLEMENTATION
-Arena temporary_allocator = {};
+Arena temporary_allocator = {0};
 #endif
 /*
 Slice stuff
@@ -189,27 +187,27 @@ CTILS_STATIC template<typename T, typename...Args> T * arena_new(Arena * arena, 
 #ifdef __cplusplus 
 template<typename T> struct Vec{T * items; size_t length; size_t capacity; Arena * arena;};
 #endif
-enable_vec_type(void);
-enable_vec_type(Byte);
-enable_vec_type(i8);
-enable_vec_type(i16);
-enable_vec_type(i32);
-enable_vec_type(i64);
-enable_vec_type(i128);
-enable_vec_type(u8);
-enable_vec_type(u16);
-enable_vec_type(u32);
-enable_vec_type(u64);
-enable_vec_type(u128);
-enable_vec_type(f32);
-enable_vec_type(f64);
-enable_vec_type(cstr);
-enable_vec_type(void_ptr);
+enable_vec_type(void)
+enable_vec_type(Byte)
+enable_vec_type(i8)
+enable_vec_type(i16)
+enable_vec_type(i32)
+enable_vec_type(i64)
+enable_vec_type(i128)
+enable_vec_type(u8)
+enable_vec_type(u16)
+enable_vec_type(u32)
+enable_vec_type(u64)
+enable_vec_type(u128)
+enable_vec_type(f32)
+enable_vec_type(f64)
+enable_vec_type(cstr)
+enable_vec_type(void_ptr)
 
 #define make(arena, T) (T##Vec){0,0,0, arena}
 #define tmp_make(T) (T##Vec){0,0,0, &temporary_allocator}
 
-#define make_static(T, args...) (const T##Vec){.items = (T[]){args}, .length = (size_t)sizeof((T[]){args})/sizeof(T), .capacity =0, .arena = 0}
+#define make_static(T, ...) (const T##Vec){.items = (T[]){VA_ARGS}, .length = (size_t)sizeof((T[]){args})/sizeof(T), .capacity =0, .arena = 0}
 
 #define make_with_cap(arena, T, cap) (T##Vec){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
 #define tmp_make_with_cap(T, cap) (T##Vec){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
@@ -337,7 +335,7 @@ String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
 #define STRING(str) (String){.items = (cstr)str, .length = sizeof(str),.arena = 0, .capacity = 0}
-enable_vec_type(String);
+enable_vec_type(String)
 CTILS_STATIC
 String new_string(Arena * arena,const char* str);
 
@@ -351,7 +349,7 @@ String new_string_wide(Arena * arena,const wchar_t* str);
 
 CTILS_STATIC
 String string_format(Arena * arena, const char * fmt, ...);
-#define tmp_string_format(fmt...) string_format(&temporary_allocator, fmt)
+#define tmp_string_format(VA_ARGS) string_format(&temporary_allocator, VA_ARGS)
 
 CTILS_STATIC
 String string_random(Arena * arena, int minlen, int maxlen);
@@ -375,7 +373,7 @@ bool string_equals(String a, String b);
 Str stuff
 */
 typedef struct {char * items; size_t length;}Str;
-enable_vec_type(Str);
+enable_vec_type(Str)
 
 CTILS_STATIC
 Str string_to_str(String s);
@@ -444,7 +442,7 @@ typedef struct{\
 	T key;\
 	U value;\
 }T##U##KeyValuePair;\
-enable_vec_type(T##U##KeyValuePair);\
+enable_vec_type(T##U##KeyValuePair)\
 typedef struct{\
 	T##U##KeyValuePairVec *Table;\
 	size_t TableSize;\
@@ -453,7 +451,7 @@ typedef struct{\
 	void (*not_key)(T*);\
 	void (*not_value)(U*);\
 }T##U##HashTable;\
-static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(T),bool (*eq_func)(T,T), void (*tdestructor)(T *), void (*udestructor)(U*)){\
+static __attribute((unused)) T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(T),bool (*eq_func)(T,T), void (*tdestructor)(T *), void (*udestructor)(U*)){\
 	T##U##HashTable * out = (T##U##HashTable *)global_alloc(1, sizeof(T##U##HashTable));\
 	out->Table= (T##U##KeyValuePairVec *)global_alloc(1,sizeof(T##U##KeyValuePairVec)*size);\
 	out->TableSize = size;\
@@ -463,16 +461,15 @@ static T##U##HashTable * T##U##HashTable_create(size_t size,size_t (*hash_func)(
 	out->not_value = udestructor;\
 	size_t i;\
 	for(i =0; i<size; i++){\
-		out->Table[i] = (T##U##KeyValuePairVec)make_with_cap(0,T##U##KeyValuePair,16);\
+		out->Table[i] = make_with_cap(0,T##U##KeyValuePair,16);\
 	}\
 	return out;\
 }\
-(void)T##U##HashTable_create;\
-static void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_size){\
+static __attribute((unused)) void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_size){\
 	T##U##KeyValuePairVec* new_table = (T##U##KeyValuePairVec *)global_alloc(8,new_size);\
 	size_t i;\
 	for(i =0; i<new_size; i++){\
-		new_table[i] = (T##U##KeyValuePairVec)make_with_cap(0,T##U##KeyValuePair,8);\
+		new_table[i] = make_with_cap(0,T##U##KeyValuePair,8);\
 	}\
 	for(i =0; i<table->TableSize; i++){\
 		size_t j;\
@@ -492,8 +489,7 @@ static void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_size){\
 	}\
     global_free(old);\
 }\
-(void) T##U##HashTable_v_resize;\
-static U* T##U##HashTable_find(T##U##HashTable* table, T key){\
+static __attribute((unused)) U* T##U##HashTable_find(T##U##HashTable* table, T key){\
 	size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
 	size_t i;\
@@ -505,8 +501,7 @@ static U* T##U##HashTable_find(T##U##HashTable* table, T key){\
 	}\
 	return nil;\
 }\
-(void)T##U##HashTable_find;
-static T##U##KeyValuePair* T##U##HashTable_find_kv(T##U##HashTable* table, T key){\
+static __attribute((unused)) T##U##KeyValuePair* T##U##HashTable_find_kv(T##U##HashTable* table, T key){\
 	if(table->TableSize == 0){\
 		return 0;\
 	}\
@@ -521,7 +516,7 @@ static T##U##KeyValuePair* T##U##HashTable_find_kv(T##U##HashTable* table, T key
 	}\
 	return nil;\
 }\
-static void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
+static __attribute((unused)) void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
 	size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
 	T##U##KeyValuePair pair = (T##U##KeyValuePair){.key = key,.value = value};\
@@ -541,7 +536,7 @@ static void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
         table->Table[hash] = tmp;\
     }\
 }\
-static bool T##U##HashTable_contains(T##U##HashTable * table, T key){\
+static __attribute((unused)) bool T##U##HashTable_contains(T##U##HashTable * table, T key){\
 	size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
     int idx = -1;\
@@ -554,7 +549,7 @@ static bool T##U##HashTable_contains(T##U##HashTable * table, T key){\
     }\
     return idx != -1;\
 }\
-static void T##U##HashTable_remove(T##U##HashTable * table, T key){\
+static __attribute((unused)) void T##U##HashTable_remove(T##U##HashTable * table, T key){\
     size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
     int idx = -1;\
@@ -571,7 +566,7 @@ static void T##U##HashTable_remove(T##U##HashTable * table, T key){\
         v_remove(table->Table[hash], idx);\
     }\
 }\
-static void T##U##HashTable_unmake(T##U##HashTable * table){\
+static __attribute((unused)) void T##U##HashTable_unmake(T##U##HashTable * table){\
 size_t i;\
 size_t j;\
 	for(i =0; i<table->TableSize; i++){\
@@ -584,7 +579,7 @@ size_t j;\
 	global_free(table->Table);\
 	global_free(table);\
 }\
-static T##U##HashTable * T##U##HashTable_construct_from_list(T##U##KeyValuePair * pairs, size_t count,size_t (*hash_func)(T),bool (*eq_func)(T,T)){\
+static __attribute((unused)) T##U##HashTable * T##U##HashTable_construct_from_list(T##U##KeyValuePair * pairs, size_t count,size_t (*hash_func)(T),bool (*eq_func)(T,T)){\
 	T##U##HashTable* tmp = T##U##HashTable_create(count,hash_func, eq_func, (void (*)(T *))no_op_void, (void(*)(U*))no_op_void);\
 	size_t i;\
 	for(i =0; i<count; i++){\
@@ -593,21 +588,21 @@ static T##U##HashTable * T##U##HashTable_construct_from_list(T##U##KeyValuePair 
 	return tmp;\
 }
 
-#define CONSTRUCT_HASHTABLE(T, name, hash_func, eq_func,args...) CONSTRUCTED(T##HashTable*, name, T##HashTable_construct_from_list, (T##KeyValuePair[]){args}, sizeof((T##KeyValuePair[]){args})/(sizeof(T##KeyValuePair)), hash_func, eq_func)
-enable_hash_type(void_ptr, void_ptr);
+#define CONSTRUCT_HASHTABLE(T, name, hash_func, eq_func,...) CONSTRUCTED(T##HashTable*, name, T##HashTable_construct_from_list, (T##KeyValuePair[]){VA_ARGS}, sizeof((T##KeyValuePair[]){args})/(sizeof(T##KeyValuePair)), hash_func, eq_func)
+enable_hash_type(void_ptr, void_ptr)
 
 /*
 Utils
 */
 
 CTILS_STATIC
-long get_time_microseconds();
+long get_time_microseconds(void);
 
 CTILS_STATIC
-void begin_profile();
+void begin_profile(void);
 
 CTILS_STATIC
-long end_profile();
+long end_profile(void);
 
 CTILS_STATIC
 void end_profile_print(const char * message);
@@ -664,6 +659,7 @@ typedef struct {\
 
 
 typedef struct Unit{
+	unsigned char _;
 }Unit;
 /*
 Iterators
@@ -729,7 +725,7 @@ void *debug_realloc(void * ptr, size_t size){
 }
 
 CTILS_STATIC
-void debug_alloc_and_global_free_counts(){
+void debug_alloc_and_global_free_counts(void){
 	printf("alloc count: %d, global_free_count: %d\n", alloc_count, global_free_count);
 }
 /*
@@ -785,7 +781,7 @@ void defer(Arena * arena, void(*func)(void *), void * data){
 	arena->defer_queue =def;
 }
 CTILS_STATIC
-Arena * arena_create(){
+Arena * arena_create(void){
     char * buffer = (char *)global_alloc(1,4096*8);
     char * next_ptr = buffer;
     char * end = buffer+4096*8;
@@ -795,7 +791,7 @@ Arena * arena_create(){
 	out->destructor_queue =0;
 	pthread_mutex_t lck;
 	pthread_mutex_init(&lck,0);
-    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next, 0};
+    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next, 0,0,0};
 	#ifdef ARENA_REGISTER
 	register_arena(out);
 	#endif
@@ -816,7 +812,7 @@ Arena * arena_create_sized(size_t reqsize){
 	pthread_mutex_t lck;
 	pthread_mutex_init(&lck,0);
     Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
-    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next,0};
+    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next,0,0,0};
 	out->destructor_queue =0;
 	#ifdef ARENA_REGISTER
 	register_arena(out);
@@ -925,17 +921,20 @@ void arena_free(Arena * arena, void * ptr){
 }
 CTILS_STATIC
 void arena_queue_destructor_span(Arena * arena, void (*fn)(void *), void * start, size_t offset, size_t count){
-
+	(void)arena;
+	(void)fn;
+	(void)start;
+	(void)offset;
+	(void)count;
 }
 CTILS_STATIC
 void arena_queue_destructor(Arena * arena,void (*fn)(void *), void * address){
 	if(!arena){
 		return;
 	}
-	ArenaDestructor * dest = arena->destructor_queue;
-	int count =0;
+	ArenaDestructor * dest = arena->destructor_queue;	
 	while(dest){
-		count +=1;
+		
 		if(dest->address == address){
 			return;
 		}else{
@@ -1039,7 +1038,7 @@ int fileno(FILE * file);
 #endif
 
 CTILS_STATIC
-long get_time_microseconds(){
+long get_time_microseconds(void){
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
 	return tv.tv_usec+tv.tv_sec*1000000;
@@ -1047,14 +1046,14 @@ long get_time_microseconds(){
 
 
 static long profile_time = 0;
-void begin_profile(){
+void begin_profile(void){
 	if(profile_time == 0){
 		profile_time = get_time_microseconds();
 	}
 }
 
 CTILS_STATIC
-long end_profile(){
+long end_profile(void){
 	if(profile_time != 0){
 		long out =  get_time_microseconds()-profile_time;
 		profile_time = 0;
@@ -1485,7 +1484,7 @@ bool is_number(char a){
 }
 CTILS_STATIC
 void no_op_void(void*ptr){
-
+	(void)ptr;
 }
 CTILS_STATIC
 bool cstr_equals(const char * a,const char * b){
@@ -1569,7 +1568,7 @@ void * next_vec_iter(Iterator * iter){
 
 CTILS_STATIC
 Iterator make_vec_iterator(voidVec v,size_t stride){
-    Iterator out = {};
+    Iterator out;
     out.data = v.items;
     out.end = v.length;
     out.idx =0;
@@ -1609,7 +1608,7 @@ void * next_hash_map_iter(Iterator * iter){
 CTILS_STATIC
 Iterator make_hash_map_iter(void * v, size_t stride, size_t offset){
     void_ptrvoid_ptrHashTable* t = (void_ptrvoid_ptrHashTable*)v;
-    Iterator out = {};
+    Iterator out;
     out.data = t->Table;
     out.end = (size_t)(t->Table+t->TableSize);
     out.idx = 0;
