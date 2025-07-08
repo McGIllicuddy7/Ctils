@@ -21,16 +21,16 @@ String generate_vector_header(const char * type, const char * type_alias,int dim
             destroy(tmp);
         }
     }
-    String name = string_format("vector%d%s",dimension, type_alias);
+    String name = string_format("Vec%d%s",dimension, type_alias);
     String strct = string_format("\ntypedef struct{\n%s}%s;\n", fields,name);
     String func_names = string_format(
-"%s %sAdd(%s a, %s b);\n\
-%s %sSub(%s a, %s b);\n\
-%s %sDot(%s a, %s b);\n\
-%s %sScale(%s s, %s a);\n\
-%s %sLen(%s a);\n\
-%s %sNormalize(%s a);\n\
-%s %sAngle(%s a, %s b);\n\
+"%s %s_add(%s a, %s b);\n\
+%s %s_sub(%s a, %s b);\n\
+%s %s_dot(%s a, %s b);\n\
+%s %s_scale(%s s, %s a);\n\
+%s %s_len(%s a);\n\
+%s %s_normalize(%s a);\n\
+%s %s_angle(%s a, %s b);\n\
 void %sprint(%s v);\n\
 \n\
 ",
@@ -56,7 +56,7 @@ String generate_code_header(){
 }
 String generate_add_code(const char * type, const char * type_alias, int dimension){
     if(dimension == 2){
-        return string_format("vector%d%s vector%d%sAdd(vector%d%s a, vector%d%s b){\n  return (vector%d%s){a.x +b.x, a.y+b.y};\n}\n",
+        return string_format("Vec%d%s Vec%d%sAdd(vector%d%s a, vector%d%s b){\n  return (vector%d%s){a.x +b.x, a.y+b.y};\n}\n",
         dimension,type_alias,
         dimension,type_alias,
         dimension,type_alias,       
