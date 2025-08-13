@@ -994,9 +994,8 @@ size_t hash_float(float fl){
 }
 
 CTILS_STATIC
-size_t hash_long(long lg){
-	long tmp = lg;
-	return hash_bytes((Byte *)&tmp, sizeof(tmp));
+size_t hash_long(long lg){	
+	return (size_t*)&lg;
 }
 
 CTILS_STATIC
