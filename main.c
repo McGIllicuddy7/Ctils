@@ -103,11 +103,6 @@ void test7(){
     for(int i =0; i<100000; i++){
         Stringi32HashTable_insert(table, string_format(0, "%d", i), i);
     }
-    Iterator iter = ITER_HASHTABLE(table);
-    i32* p = 0;
-    while(NEXT(p,iter)){
-        printf("%d\n", *p);
-    }
     Stringi32HashTable_unmake(table);
     debug_alloc_and_global_free_counts();
 }
@@ -118,28 +113,15 @@ void test8(){
         v_append(items, i);
     }
     u64 * iter = 0;
-    while((iter = v_consume_type(items, u64))){
+    while((iter = (u64*)v_consume_type(items, u64))){
         printf("%llu\n", *iter);
     }
     printf("%zu\n", items.length);
 }
-StringVec strings = make_static(String,STRING("hello"), STRING("world"),STRING("lol"), STRING(":3"));
 
-void test9(){
-    Iterator it = ITER_VEC(strings);
-    String * t;
-    while(NEXT(t,it)){
-        printf("%s\n", t->items);
-    }
-}
 
-static CONSTRUCT_HASHTABLE(Stringi32, table,hash_string, string_equals,{STRING("hey"),1}, {STRING("toast"), 2}, {STRING("i"), 4},{STRING("love"), 8}, {STRING("you"), 16}, {STRING("\n"),32});
-
-void test10(){
-    printf("%d\n", *Stringi32HashTable_find(table, STRING("hey")));
-}
 extern void test11();
 int main(int argc, const char ** argv){
-    test11();
+    hash_test();
     return 0;
 }
