@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdio.h>
 
-enable_vec_type(int);
 enable_hash_type(String, int);
 
 make_lambda_type(void, void);

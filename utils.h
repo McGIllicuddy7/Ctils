@@ -242,7 +242,20 @@ enable_vec_type(f32)
 enable_vec_type(f64)
 enable_vec_type(cstr)
 enable_vec_type(void_ptr)
+enable_vec_type(int)
+enable_vec_type(long)
+enable_vec_type(float)
+enable_vec_type(double)
+enable_vec_type(bool)
+#ifdef __cplusplus
+#define make(arena, T) T##Vec{0,0,0, arena}
+#define tmp_make(T) T##Vec{0,0,0, &temporary_allocator}
 
+#define make_static(T, ...) T##Vec{.items = (T[])({VA_ARGS}, .length = (size_t)sizeof((T[]){args})/sizeof(T), .capacity =0, .arena = 0}
+
+#define make_with_cap(arena, T, cap) T##Vec{(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
+#define tmp_make_with_cap(T, cap) T##Vec{(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
+#else
 #define make(arena, T) (T##Vec){0,0,0, arena}
 #define tmp_make(T) (T##Vec){0,0,0, &temporary_allocator}
 
@@ -250,9 +263,9 @@ enable_vec_type(void_ptr)
 
 #define make_with_cap(arena, T, cap) (T##Vec){(T*)(arena_alloc(arena,cap*sizeof(T))), 0, (size_t)(cap), arena}
 #define tmp_make_with_cap(T, cap) (T##Vec){(T*)(arena_alloc(&temporary_allocator, cap*sizeof(T))), 0,(size_t)cap, &temporary_allocator}
-
+#endif
 #ifdef __cplusplus
-#define clone(T,vec, arena) (T##Vec){memdup_destructors(arena,vec.items, vec.length), vec.length, vec.capacity}
+#define clone(T,vec, arena) T##Vec{memdup_destructors(arena,vec.items, vec.length), vec.length, vec.capacity}
 #else
 #define clone(T,vec, arena) (T##Vec){memdup(arena,vec.items, vec.capacity*sizeof(vec.items[0])), vec.length, vec.capacity}
 #endif 
@@ -348,17 +361,23 @@ template<typename T, typename U> void v_append(U& vec, T value){
     assert((size_t)idx<vec.length+1 && idx>=0);\
     if(vec.length+1> vec.capacity){vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
     memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;  arena_queue_destructor((vec.arena), (void (*)(void *))destruct<typeof(vec.items)>, &vec.items[vec.length-1]);
+#define v_resize(vec, len){\
+	vec.length= len;\
+	size_t previous_cap = vec.capacity;\
+	while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
+	vec.items = (typeof(v.items))arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 #else 
 #define v_insert(vec, idx, item)\
     assert((size_t)idx<vec.length+1 && idx>=0);\
     if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
     memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
+	#define v_resize(vec, len){\
+	vec.length= len;\
+	size_t previous_cap = vec.capacity;\
+	while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
+	vec.items = (void*)arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 #endif
-#define v_resize(vec, len){\
-vec.length= len;\
-size_t previous_cap = vec.capacity;\
-while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
-vec.items = (void*)arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
+
 
 #define len(vec) (vec).length
 
@@ -373,7 +392,11 @@ void * vector_consume(voidVec * vec, size_t size);
 String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
+#ifdef __cplusplus
+#define STRING(str) String{.items = (cstr)str, .length = sizeof(str),.arena = 0, .capacity = 0}
+#else
 #define STRING(str) (String){.items = (cstr)str, .length = sizeof(str),.arena = 0, .capacity = 0}
+#endif
 enable_vec_type(String)
 CTILS_STATIC
 String new_string(Arena * arena,const char* str);
@@ -422,8 +445,13 @@ String str_to_string(Arena * arena,Str s);
 
 CTILS_STATIC
 void put_str_ln(Str str);
+#ifdef __cplusplus
+#define STR(st) Str{(char*)st, (size_t)strlen(st)}
+#define substring(st, start, end) Str{(char*)(st.items+start), (size_t)(end-start)}
+#else
 #define STR(st) (Str){(char*)st, (size_t)strlen(st)}
 #define substring(st, start, end)(Str){(char*)(st.items+start), (size_t)(end-start)}
+#endif
 
 CTILS_STATIC
 char * str_to_c_string(Arena * arena, Str s);
@@ -558,7 +586,9 @@ static UNUSED T##U##KeyValuePair* T##U##HashTable_find_kv(T##U##HashTable* table
 static UNUSED void T##U##HashTable_insert(T##U##HashTable* table, T key, U value){\
 	size_t hashval = table->hash_func(key);\
 	size_t hash = hashval%table->TableSize;\
-	T##U##KeyValuePair pair = (T##U##KeyValuePair){.key = key,.value = value};\
+	T##U##KeyValuePair pair;\
+	pair.key = key;\
+	pair.value = value;\
 	T##U##KeyValuePairVec tmp = table->Table[hash];\
     int idx = -1;\
 	size_t i;\
@@ -707,7 +737,23 @@ enable_result(int)
 enable_result(long)
 enable_result(float)
 enable_result(double)
-
+enable_result(bool)
+enable_result(Str)
+enable_result(String)
+enable_result(Unit)
+enable_result(Byte)
+enable_result(i8)
+enable_result(i16)
+enable_result(i32)
+enable_result(i64)
+enable_result(u8)
+enable_result(u16)
+enable_result(u32)
+enable_result(u64)
+enable_result(f32)
+enable_result(f64)
+enable_result(cstr)
+enable_result(void_ptr)
 #define Ok(T, V) (T##Result){.data = (ResultData){.ok = true}, .value = (V)}
 #define Err(T) (T##Result){.data = (ResultData){.ok = false, .stack_trace = realloc_stack_trace(0, __LINE__, __FILE__, __FUNCTION__, "", false),.msg = "threw_error"}}
 #define Try(T, U,rv,Expr, Statement){\
@@ -768,7 +814,7 @@ CTILS_STATIC void mutex_destroy(Mutex* mtx) {
  */
 CTILS_STATIC void thread_init(Thread * t, void*(*func)(void* args), void* args){
 	#ifdef WIN32
-	t->thread = CreateThread(0,0,(void*)func,args,0,0);
+	t->thread = CreateThread(0,0,(LPTHREAD_START_ROUTINE)func,args,0,0);
 	#else
 	pthread_create(&t->thread, 0, func, args);
 	#endif
