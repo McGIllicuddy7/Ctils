@@ -122,8 +122,7 @@ Arena stuff
 typedef struct ArenaDestructor{
 	void (*destructor)(void*);
 	void * address;
-	struct ArenaDestructor * next;
-	
+	struct ArenaDestructor * next;	
 } ArenaDestructor;
 typedef struct Arena{
 	Mutex lock;
@@ -140,6 +139,8 @@ typedef struct Arena{
 CTILS_STATIC
 Arena * arena_create(void);
 
+CTILS_STATIC
+Arena arena_create_static(void);
 void arena_destroy_thunk(Arena **);
 #define new_arena(name) __attribute__((cleanup(arena_destroy_thunk))) Arena * name; name = arena_create()
 
@@ -184,7 +185,11 @@ template <typename T>void arena_qd(Arena * arena, T* v){
 extern Arena temporary_allocator;
 #endif
 #ifdef CTILS_IMPLEMENTATION
+#ifdef __cplusplus
+Arena temporary_allocator = arena_create_static();
+#else
 Arena temporary_allocator = {0};
+#endif
 #endif
 /*
 Slice stuff
@@ -196,7 +201,7 @@ void * memdup(Arena * arena,void * ptr, size_t size);
 #include <new>
 CTILS_STATIC template<typename T>T * memdup_destructors(Arena * arena, T * ptr,size_t count){
 	T * out = (T*)arena_alloc(arena, sizeof(T)*count);
-	for(int i =0; i<count; i++){
+	for(size_t i =0; i<count; i++){
 		new (&out[i]) T(ptr[i]);
 		void (*func)(void *) = (void (*)(void *))(T::~T);
 		void * vptr = (void *)(((T*)out +i));
@@ -206,11 +211,11 @@ CTILS_STATIC template<typename T>T * memdup_destructors(Arena * arena, T * ptr,s
 	}
 }
 CTILS_STATIC template<typename T> void arena_copy_to(Arena * arena,T* dest, T * src, size_t count){
-	for(int i =0; i<count; i++){
+	for(size_t i =0; i<count; i++){
 		dest[i] = src[i];
 	}
 	if constexpr(!std::is_trivially_destructible<T>()){
-		for(int i =0; i<count; i++){
+		for(size_t i =0; i<count; i++){
 			arena_queue_destructor(arena, (void (*)(void*))destruct<T>, &dest[i]);
 		}
 	}
@@ -272,7 +277,7 @@ enable_vec_type(bool)
 CTILS_STATIC void v_void_spawn(void * a, void * b);
 #define v_swap(a, b) {v_void_swap((void*)&(a), (void*)&(b));}
 #ifdef __cplusplus
-static bool arena_object_exists(Arena *arena, void * ptr){
+inline bool arena_object_exists(Arena *arena, void * ptr){
 	ArenaDestructor *a = arena->destructor_queue;
 	while(a){
 		if(a->address == ptr){
@@ -286,7 +291,7 @@ template<typename T, typename U> void v_append(U& vec, T value){
 	if((vec).capacity<=(vec).length+1){
 		if ((vec).capacity != 0){
 			T* vtmp = (T*)arena_alloc((vec).arena,(vec).capacity*sizeof(T)*2);(vec).capacity *= 2;
-			memset(vtmp, 0, sizeof(T)*(vec).capacity);
+			memset((void*)vtmp, 0, sizeof(T)*(vec).capacity);
 			arena_copy_to((vec).arena, vtmp, (vec.items), (vec).length);
 			vec.items = vtmp;
 		}else{
@@ -298,8 +303,7 @@ template<typename T, typename U> void v_append(U& vec, T value){
 			(vec).items = vtmp;
 		}
   	}   
-  	(vec).items[(vec).length] = value; 
-	size_t old_len = vec.length;
+  	(vec).items[(vec).length] = value; 	
 	vec.length += 1;
 	if constexpr(!std::is_trivially_destructible<T>()){
 		arena_qd((vec).arena, &(vec).items[(vec).length-1]);
@@ -365,7 +369,7 @@ template<typename T, typename U> void v_append(U& vec, T value){
 	vec.length= len;\
 	size_t previous_cap = vec.capacity;\
 	while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
-	vec.items = (typeof(v.items))arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
+	vec.items = (typeof(vec.items))arena_realloc(vec.arena,vec.items, previous_cap,vec.capacity*sizeof(vec.items[0]));}
 #else 
 #define v_insert(vec, idx, item)\
     assert((size_t)idx<vec.length+1 && idx>=0);\
@@ -543,7 +547,9 @@ static UNUSED void T##U##HashTable_v_resize(T##U##HashTable * table, size_t new_
 		for(j = 0; j<len(table->Table[i]); j++){\
 			size_t hashval = table->hash_func(table->Table[i].items[j].key);\
 			size_t hash = hashval%new_size;\
-			T##U##KeyValuePair pair = {.key = table->Table[i].items[j].key, .value = table->Table[i].items[j].value};\
+			T##U##KeyValuePair pair;\
+			pair.key = table->Table[i].items[j].key;\
+			pair.value = table->Table[i].items[j].value;\
 			v_append(new_table[hash], pair);\
 		}\
 	}\
@@ -927,28 +933,45 @@ Arena * arena_create(void){
 	out->destructor_queue =0;
 	Mutex lck;
 	mutex_create(&lck);
-    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next, 0,0,0};
+	#ifdef __cplusplus
+	*out = Arena{lck,buffer, next_ptr, end, previous_allocation, next, 0,0,0};
+
+#else
+    	*out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next, 0,0,0};
+#endif
 	#ifdef ARENA_REGISTER
+
 	register_arena(out);
 	#endif
     return out;
 }
 
 CTILS_STATIC
+Arena  arena_create_static(void){
+	Arena * tmp = arena_create();
+	Arena out = *tmp;
+	free(tmp);
+	return out;
+}
+CTILS_STATIC
 Arena * arena_create_sized(size_t reqsize){
-    size_t size = 4096;
-    while(size<=reqsize){
-        size *= 2;
-    }
-    char * buffer = (char *)global_alloc(1,size);
-    char * next_ptr = buffer;
-    char * end = buffer+size;
-    char * previous_allocation = 0;
-    struct Arena * next = 0;
+    	size_t size = 4096;
+    	while(size<=reqsize){
+        	size *= 2;
+    	}
+    	char * buffer = (char *)global_alloc(1,size);
+    	char * next_ptr = buffer;
+    	char * end = buffer+size;
+   	char * previous_allocation = 0;
+   	struct Arena * next = 0;
 	Mutex lck;
 	mutex_create(&lck);
-    Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
-    *out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next,0,0,0};
+   	 Arena * out = (Arena*)global_alloc(1,sizeof(Arena));
+	#ifdef __cplusplus
+	*out = Arena{lck,buffer, next_ptr, end, previous_allocation, next,0,0,0};
+	#else
+    	*out = (Arena){lck,buffer, next_ptr, end, previous_allocation, next,0,0,0};
+	#endif
 	out->destructor_queue =0;
 	#ifdef ARENA_REGISTER
 	register_arena(out);
@@ -1270,7 +1293,12 @@ Str stuff
 
 CTILS_STATIC
 Str string_to_str(String s){
+	#ifdef __cplusplus
+	return Str{s.items, s.length};
+
+#else
     return (Str){s.items, s.length};
+#endif
 }
 
 CTILS_STATIC
@@ -1278,7 +1306,11 @@ String str_to_string(Arena * arena,Str s){
     char * out = (char*)arena_alloc(arena, s.length+1);
     memset(out, 0,s.length+1);
     memcpy(out, s.items, s.length);
+#ifdef __cplusplus
+    return String{out, s.length, s.length, arena};
+#else
     return (String){out, s.length, s.length, arena};
+#endif
 }
 
 CTILS_STATIC
@@ -1634,7 +1666,16 @@ ByteVec read_file_to_bytes(Arena * arena, const char *file_name){
 	v_resize(out, fsize);
 	fread(out.items, 1, fsize, f);
 	fclose(f);
+	#ifdef __cplusplus
+	ByteVec ft;
+	ft.items = (Byte*)out.items;
+	ft.length = out.length;
+	ft.capacity = out.capacity;
+	ft.arena = out.arena;
+	return ft;
+	#else
 	return (ByteVec){.items = (Byte *)out.items, .length = out.length, .capacity = out.capacity, .arena = out.arena};
+	#endif
 }
 
 CTILS_STATIC
@@ -1664,7 +1705,12 @@ NoiseOctave2d noise_octave_2d_new(double scale_divisor){
         i64 v0 = rand()%1000000000;
         i64 v1 = rand()%1000000000;
         i64 v2 = rand()%1000000000;
-        return (NoiseOctave2d){v0,v1,v2,scale_divisor};
+	NoiseOctave2d out;
+	out.v0 = v0;
+	out.v1 = v1;
+	out.v2 = v2;
+	out.scale_divisor = scale_divisor;
+	return out; 
 }
 
 CTILS_STATIC
@@ -1679,7 +1725,10 @@ float2 random_gradient(NoiseOctave2d * self, i32 x, i32 y) {
         a &= b << s | b >> (w - s);
         a *= self->v2;
         f64 random = (f64)a * (3.14159265 / (f64)(!(!(u64)0 >> 1)));
-        return (float2){cos(random), sin(random)};
+	float2 out;
+	out.x = cos(random);
+	out.y = sin(random);
+	return out;
         //return self.points[y as usize % self.points.len()][x as usize % self.points.len()];
 }
 
@@ -1718,17 +1767,17 @@ const char ** realloc_stack_trace(const char ** msg,int line, const char * file,
 	char ** out =0;
 	size_t idx =0;
 	if(msg == 0){
-		out = err_alloc(sizeof(const char *)*2);	
+		out = (char**)err_alloc(sizeof(const char *)*2);	
 	}else{
 		size_t count =0;
 		while(msg[count]){
 			idx +=1;
 			count+=1;
 		}
-		out = err_realloc(msg,(count+1)*sizeof(const char*));
+		out = (char**)err_realloc(msg,(count+1)*sizeof(const char*));
 	}
 	size_t fcount = 32+strlen(file)+strlen(function);
-	char * tmp = err_alloc(fcount);
+	char * tmp = (char*)err_alloc(fcount);
 	snprintf(tmp,fcount-1, "%s in file:%s, line:%d", function, file, line);
 	out[idx] = tmp;	
 	idx+= 1;
@@ -1766,7 +1815,7 @@ void * err_alloc(size_t count){
 		return 0;
 	}
 	err_all.next += c;
-	size_t * tmp = out;
+	size_t * tmp = (size_t*)out;
 	*tmp = count;
 	err_all.prev = (char*)(tmp+2);
 	return (void*)(tmp+2);

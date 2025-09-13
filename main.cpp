@@ -46,11 +46,11 @@ enable_vec_type(Deleted);
 int main(){
     Arena * local = arena_create();
     DeletedVec ints = make(local, Deleted);
-    for(int i =0; i<5000; i++){
-        v_append(ints, std::move(Deleted(string_format(local,"%d", i).items)));
+    for(size_t i =0; i<5000; i++){
+        v_append(ints, Deleted(string_format(local,"%d", i).items));
     }
-    for(int i =0; i<ints.length; i++){
-        printf("%d\n",i);
+    for(size_t i =0; i<ints.length; i++){
+        printf("%zu\n",i);
     }
     printf("hello\n");
     arena_destroy(local);
