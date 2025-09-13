@@ -767,7 +767,7 @@ enable_result(void_ptr)
 	if(rv##r.data.ok) Statement \
 	else return (U##Result){.data = (ResultData){.ok = false, .stack_trace =  realloc_stack_trace(rv##r.data.stack_trace, __LINE__, __FILE__, __FUNCTION__, rv##r.data.msg,false),.msg = rv##r.data.msg}};\
 }
-#define TryCatch(T, U, rv, Expr, Statement,Error){T##Result rv##r= Expr; T rv = rv##r.value;if(Result##r.data.ok) Statement else Error; err_gc();}
+#define TryCatch(T, U, rv, Expr, Statement,Error){T##Result rv##r= Expr; T rv = rv##r.value;if(rv##r.data.ok) Statement else Error; err_gc();}
 #define TryExit(T, U,rv,Expr, Statement){T##Result rv##r = Expr; T rv = rv##r.value;if(rv##r.data.ok) Statement \
 else realloc_stack_trace(rv##r.data.stack_trace, __LINE__, __FILE__, __FUNCTION__, rv##r.data.msg,true);}
 

@@ -120,11 +120,11 @@ void test8(){
 }
 #endif
 intResult stack_test(size_t count){
-	if(count == 8){
+	if(count ==30){
 		return Err(int);
 	}
-	Try(int, int, r, stack_test(count+1),{printf("not likely\n");});
-	return Ok(int, 10);
+	TryCatch(int, int, r, stack_test(count+1),{printf("not likely\n");}, {return Ok(int,0);});
+	return Ok(int ,0);
 }
 intResult test9(){
 	return stack_test(0);
