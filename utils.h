@@ -690,6 +690,34 @@ f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase);
 typedef struct Unit{
 	unsigned char _;
 }Unit;
+/*
+ Result
+ */
+typedef struct {
+	bool ok;
+	const char ** stack_trace;	
+	const char * msg;
+}ResultData;
+void * err_alloc(size_t count);
+void * err_realloc(void * old,size_t count);
+void err_gc();
+const char ** realloc_stack_trace(const char ** msg,int line, const char * file, const char * function,const char * to_print, bool end);
+#define enable_result(T) typedef struct T##Result{ResultData data; T value;}T##Result;
+enable_result(int)
+enable_result(long)
+enable_result(float)
+enable_result(double)
+
+#define Ok(T, V) (T##Result){.data = (ResultData){.ok = true}, .value = (V)}
+#define Err(T) (T##Result){.data = (ResultData){.ok = false, .stack_trace = realloc_stack_trace(0, __LINE__, __FILE__, __FUNCTION__, "", false),.msg = "threw_error"}}
+#define Try(T, U,rv,Expr, Statement){\
+	T##Result rv##r = Expr; T rv = rv##r.value;\
+	if(rv##r.data.ok) Statement \
+	else return (U##Result){.data = (ResultData){.ok = false, .stack_trace =  realloc_stack_trace(rv##r.data.stack_trace, __LINE__, __FILE__, __FUNCTION__, rv##r.data.msg,false),.msg = rv##r.data.msg}};\
+}
+#define TryCatch(T, U, rv, Expr, Statement,Error){T##Result rv##r= Expr; T rv = rv##r.value;if(Result##r.data.ok) Statement else Error; err_gc();}
+#define TryExit(T, U,rv,Expr, Statement){T##Result rv##r = Expr; T rv = rv##r.value;if(rv##r.data.ok) Statement \
+else realloc_stack_trace(rv##r.data.stack_trace, __LINE__, __FILE__, __FUNCTION__, rv##r.data.msg,true);}
 
 /*
 Implementation
@@ -1636,5 +1664,87 @@ f64 perlin(NoiseOctave2d * self,f64 xbase, f64 ybase){
     f64 value = interpolate(ix0, ix1, sy);
     return value;
 }
+
+/*
+Result
+*/
+const char ** realloc_stack_trace(const char ** msg,int line, const char * file, const char * function,const char *to_print, bool end){
+	char ** out =0;
+	size_t idx =0;
+	if(msg == 0){
+		out = err_alloc(sizeof(const char *)*2);	
+	}else{
+		size_t count =0;
+		while(msg[count]){
+			idx +=1;
+			count+=1;
+		}
+		out = err_realloc(msg,(count+1)*sizeof(const char*));
+	}
+	size_t fcount = 32+strlen(file)+strlen(function);
+	char * tmp = err_alloc(fcount);
+	snprintf(tmp,fcount-1, "%s in file:%s, line:%d", function, file, line);
+	out[idx] = tmp;	
+	idx+= 1;
+	out[idx] =0;
+	if(strcmp(function, "main") == 0 || end){
+		fprintf(stderr,"error:%s\n", to_print);
+		for(size_t i = 0; i<idx; i++){
+			fprintf(stderr,"in: %s\n",out[i]);
+		}
+		err_gc();
+		exit(1);
+	}
+	return (const char**)out;
+}
+typedef struct {
+	char buffer[4096*4];
+	char * next;
+	char * prev;
+}ErrAllocator;
+_Thread_local ErrAllocator err_all = (ErrAllocator){.buffer = {0},.next = 0, .prev =0};
+void * err_alloc(size_t count){	
+	if(err_all.next == 0){
+		err_all.next = err_all.buffer;
+	}
+	if(count%2*sizeof(size_t)!= 0){
+		count += 2*sizeof(size_t)-count%(2*sizeof(size_t));
+	}
+	void * out = err_all.next;
+	size_t c = count+2*sizeof(size_t);
+	if((char*)out+c>=&err_all.buffer[4096*4]){
+		assert(false);
+		return 0;
+	}
+	err_all.next += c;
+	size_t * tmp = out;
+	*tmp = count;
+	err_all.prev = (char*)(tmp+2);
+	return (void*)(tmp+2);
+}
+void * err_realloc(void * old,size_t count){
+	if(err_all.next == 0){
+		err_all.next = err_all.buffer;
+	}
+	if(count%2*sizeof(size_t)!= 0){
+		count += 2*sizeof(size_t)-count%(2*sizeof(size_t));
+	}
+	if(old == err_all.prev){
+		err_all.next = (char*)old-2*sizeof(size_t);
+		return err_alloc(count);
+	}
+	else{
+		void * out = err_alloc(count);
+		size_t c= ((size_t*)old)[-2];
+		memcpy(out, old, c);
+		return out;
+	}
+	
+}
+void err_gc(){
+	err_all.next = err_all.buffer;
+	err_all.prev =0;
+}
+
 
 #endif

@@ -119,9 +119,20 @@ void test8(){
     printf("%zu\n", items.length);
 }
 
-
+intResult stack_test(size_t count){
+	if(count == 8){
+		return Err(int);
+	}
+	Try(int, int, r, stack_test(count+1),{printf("not likely\n");});
+}
+intResult test9(){
+	return stack_test(0);
+}
+void test10(){
+	TryExit(int,int,r, test9(), {printf("%d\n", r);});
+}
 extern void test11();
 int main(int argc, const char ** argv){
-    hash_test();
-    return 0;
+	test10();
+	return 0;
 }
