@@ -124,6 +124,7 @@ intResult stack_test(size_t count){
 		return Err(int);
 	}
 	Try(int, int, r, stack_test(count+1),{printf("not likely\n");});
+	return Ok(int, 10);
 }
 intResult test9(){
 	return stack_test(0);
