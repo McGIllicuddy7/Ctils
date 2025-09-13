@@ -106,6 +106,7 @@ void test7(){
     Stringi32HashTable_unmake(table);
     debug_alloc_and_global_free_counts();
 }
+#ifndef WIN32
 void test8(){
     new_arena(local);
     u64Vec items = make(local, u64);
@@ -118,7 +119,7 @@ void test8(){
     }
     printf("%zu\n", items.length);
 }
-
+#endif
 intResult stack_test(size_t count){
 	if(count == 8){
 		return Err(int);

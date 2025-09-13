@@ -30,7 +30,7 @@ CTILS_STATIC
 void no_op_void(void*);
 #define STRINGIFY1(S) #S 
 #define STRINGIFY(S) STRINGIFY1(S)
-#ifdef __unix__
+#ifndef WIN32
 #define CONSTRUCTED(Type, name, fn, ...) Type name; __attribute__((constructor)) static void construct__##name__##fn () { name = fn(VA_ARGS);}
 #endif
 CTILS_STATIC
@@ -76,7 +76,7 @@ typedef void * void_ptr;
 /*
 Mutexes
 */
-#if defined(__unix__) || defined(__MACH__)
+#ifndef WIN32
 typedef struct {
 	pthread_mutex_t mut;
 }Mutex;
@@ -1702,9 +1702,12 @@ typedef struct {
 	char * next;
 	char * prev;
 }ErrAllocator;
-_Thread_local ErrAllocator err_all = (ErrAllocator){.buffer = {0},.next = 0, .prev =0};
+ErrAllocator err_all;
+int err_all_init = false;
+
 void * err_alloc(size_t count){	
-	if(err_all.next == 0){
+	if(!err_all_init){
+		err_all_init = true;
 		err_all.next = err_all.buffer;
 	}
 	if(count%2*sizeof(size_t)!= 0){
