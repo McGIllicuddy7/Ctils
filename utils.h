@@ -432,11 +432,9 @@ bool string_equals(String a, String b);
 #define str_v_append(a,b)\
 	if(len(a) == 0){\
 		v_append(a, b);\
-		v_append(a, '\0');\
-		printf("debug_str:%s\n", a.items);\
+		v_append(a, '\0');\	
 	}else{\
-		v_resize(a, len(a)+1);\
-		printf("debug_str:%zu, %s\n", a.length,a.items);\
+		v_resize(a, len(a)+1);\	
 		a.items[len(a)-2] = b;\
 		a.items[len(a)-1] = '\0';\
 	}
