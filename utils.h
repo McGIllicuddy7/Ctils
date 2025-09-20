@@ -432,9 +432,9 @@ bool string_equals(String a, String b);
 #define str_v_append(a,b)\
 	if(len(a) == 0){\
 		v_append(a, b);\
-		v_append(a, '\0');\	
+		v_append(a, '\0');\
 	}else{\
-		v_resize(a, len(a)+1);\	
+		v_resize(a, len(a)+1);\
 		a.items[len(a)-2] = b;\
 		a.items[len(a)-1] = '\0';\
 	}
@@ -1438,8 +1438,7 @@ bool string_equals(String a, String b);
 
 CTILS_STATIC
 String new_string(Arena * arena,const char* str){
-	int l = strlen(str);
-	printf("%d\n", l);
+	int l = strlen(str);	
     String out;
 	out.items = (char*)arena_alloc(arena, (l+1)*sizeof(str_type));
 	out.length =l+1; 
