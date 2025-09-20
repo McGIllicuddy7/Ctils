@@ -375,7 +375,7 @@ template<typename T, typename U> void v_append(U& vec, T value){
     assert((size_t)idx<vec.length+1 && idx>=0);\
     if(vec.length+1> vec.capacity){vec.items = arena_realloc(vec.arena,vec.items, vec.capacity,(vec.capacity+1)*sizeof(vec.items[0]));vec.capacity++;}\
     memmove(&vec.items[idx+1], &vec.items[idx], (vec.capacity-idx)*sizeof(vec.items[0])); vec.items[idx] = item; vec.length ++;
-	#define v_resize(vec, len){\
+#define v_resize(vec, len){\
 	vec.length= len;\
 	size_t previous_cap = vec.capacity;\
 	while (vec.capacity<vec.length){if(vec.capacity != 0){vec.capacity *= 2;} else{vec.capacity = 1;}}\
@@ -397,9 +397,9 @@ String stuff
 */
 typedef struct{str_type * items; size_t length; size_t capacity;Arena * arena;}String;
 #ifdef __cplusplus
-#define STRING(str) String{.items = (cstr)str, .length = sizeof(str),.arena = 0, .capacity = 0}
+#define STRING(str) String{.items = (cstr)str, .length = stlren(str),.arena = 0, .capacity = 0}
 #else
-#define STRING(str) (String){.items = (cstr)str, .length = sizeof(str),.arena = 0, .capacity = 0}
+#define STRING(str) (String){.items = (cstr)str, .length = strlen(str),.arena = 0, .capacity = 0}
 #endif
 enable_vec_type(String)
 CTILS_STATIC
@@ -430,12 +430,17 @@ bool string_equals(String a, String b);
 	_strconcat(&a,(const char *)b, sizeof(b[0]));
 
 #define str_v_append(a,b)\
-	v_resize(a, len(a)+1);\
-	a.items[len(a)-3] = b;\
-	a.items[len(a)-2] = '\0'\
-
-
-/*
+	if(len(a) == 0){\
+		v_append(a, b);\
+		v_append(a, '\0');\
+		printf("debug_str:%s\n", a.items);\
+	}else{\
+		v_resize(a, len(a)+1);\
+		printf("debug_str:%zu, %s\n", a.length,a.items);\
+		a.items[len(a)-2] = b;\
+		a.items[len(a)-1] = '\0';\
+	}
+	/*
 Str stuff
 */
 typedef struct {char * items; size_t length;}Str;
@@ -450,7 +455,7 @@ String str_to_string(Arena * arena,Str s);
 CTILS_STATIC
 void put_str_ln(Str str);
 #ifdef __cplusplus
-#define STR(st) Str{(char*)st, (size_t)strlen(st)}
+#define STR(st) Str{.items =(char*)st, (size_t)strlen(st)}
 #define substring(st, start, end) Str{(char*)(st.items+start), (size_t)(end-start)}
 #else
 #define STR(st) (Str){(char*)st, (size_t)strlen(st)}
@@ -763,7 +768,7 @@ enable_result(void_ptr)
 #define Ok(T, V) (T##Result){.data = (ResultData){.ok = true}, .value = (V)}
 #define Err(T) (T##Result){.data = (ResultData){.ok = false, .stack_trace = realloc_stack_trace(0, __LINE__, __FILE__, __FUNCTION__, "", false),.msg = "threw_error"}}
 #define Try(T, U,rv,Expr, Statement){\
-	T##Result rv##r = Expr; T rv = rv##r.value;\
+	T##Result rv##r = Expr; T rv = rv##r.value; (void)rv;\
 	if(rv##r.data.ok) Statement \
 	else return (U##Result){.data = (ResultData){.ok = false, .stack_trace =  realloc_stack_trace(rv##r.data.stack_trace, __LINE__, __FILE__, __FUNCTION__, rv##r.data.msg,false),.msg = rv##r.data.msg}};\
 }
@@ -1293,11 +1298,18 @@ Str stuff
 
 CTILS_STATIC
 Str string_to_str(String s){
-	#ifdef __cplusplus
-	return Str{s.items, s.length};
+		#ifdef __cplusplus
+if(s.length == 0){
+		return Str{s.items, 0};
+	}
+
+	return Str{s.items, s.length-1};
 
 #else
-    return (Str){s.items, s.length};
+	if(s.length == 0){
+		return (Str){s.items, 0};
+	}
+    return (Str){s.items, s.length-1};
 #endif
 }
 
@@ -1428,17 +1440,17 @@ bool string_equals(String a, String b);
 
 CTILS_STATIC
 String new_string(Arena * arena,const char* str){
-	int l = strlen(str)+1;
+	int l = strlen(str);
+	printf("%d\n", l);
     String out;
-	out.items = (char*)arena_alloc(arena, l*sizeof(str_type));
-	out.length =0; 
-	out.capacity = l;
+	out.items = (char*)arena_alloc(arena, (l+1)*sizeof(str_type));
+	out.length =l+1; 
+	out.capacity = l+1;
 	out.arena = arena;
 	int i;
-	for(i = 0; i<l; i++){
-		v_append(out, (str_type)str[i]);
-	}
-	v_append(out, '\0');
+	for(i = 0; i<l+1; i++){
+		out.items[i] = str[i];
+	}	
 	return out;
 }
 
@@ -1461,7 +1473,7 @@ String new_string_wide(Arena * arena,const wchar_t* str){
 CTILS_STATIC
 void _strconcat(String * a, const char* b, size_t b_size){
 	if(sizeof(str_type) == 1){
-        int l = (*a).length-2;
+        int l = (*a).length-1;
         int l2 = strlen(b);
 		int i;
 		v_resize((*a), (*a).length+l2);

@@ -134,6 +134,8 @@ void test10(){
 }
 extern void test11();
 int main(int argc, const char ** argv){
-	test10();
+	String t = string_format(0, "hello world:%d\n", 10);
+	printf("%s\n", t.items);
+	printf("%zu, %zu\n", t.length, strlen(t.items));
 	return 0;
 }
